@@ -86,7 +86,7 @@ def findT(aperturefile='aperture.dat',
 
   return T
 
-def map_dfn(ellipses, origin, nx, ny, nz, d):
+def map_dfn(ellipses, origin, nx, ny, nz, step):
   '''Identify intersecting fractures for each cell of the ECPM domain.
      Extent of ECPM domain is determined by nx,ny,nz, and d (see below).
      ECPM domain can be smaller than the DFN domain.
@@ -99,8 +99,13 @@ def map_dfn(ellipses, origin, nx, ny, nz, d):
      nx = int number of cells in x in ECPM domain
      ny = int number of cells in y in ECPM domain
      nz = int number of cells in z in ECPM domain
-     d = float discretization length in ECPM domain
+     step = [float, float, float] discretization length in ECPM domain
   '''
+  rel_corner = np.array([[0, 0, 0], [1, 0, 0],
+                         [1, 1, 0], [0, 1, 0],
+                         [0, 0, 1], [1, 0, 1],
+                         [1, 1, 1], [0, 1, 1]])
+
   ncell = nx*ny*nz
   nfrac = len(ellipses)
   fracture = np.zeros((ncell,10), dtype=np.int)
@@ -138,17 +143,18 @@ def map_dfn(ellipses, origin, nx, ny, nz, d):
       z1 = translation[2]-yrad
       z2 = translation[2]+yrad
     #find indices of nearby cells so don't have to check all of them!
-    i1 = max(0,int((x1-origin[0])/d)) #round down
-    i2 = min(nx,int((x2-origin[0])/d+1)) #round up
-    j1 = max(0,int((y1-origin[1])/d))
-    j2 = min(ny,int((y2-origin[1])/d+1))
-    k1 = max(0,int((z1-origin[2])/d))
-    k2 = min(nz,int((z2-origin[2])/d+1))
+    i1 = max(0, int((x1-origin[0]) / step[0])) #round down
+    i2 = min(nx, int((x2-origin[0]) / step[0] + 1)) #round up
+    j1 = max(0, int((y1-origin[1]) / step[1]))
+    j2 = min(ny, int((y2-origin[1]) / step[1] + 1))
+    k1 = max(0, int((z1-origin[2]) / step[2]))
+    k2 = min(nz, int((z2-origin[2]) / step[2] + 1))
     for k in range(k1,k2): #for cells close to fracture
       for j in range(j1,j2):
         for i in range(i1,i2):
           #check if cell center is inside radius of fracture
-          center = [origin[0]+i*d+d/2.,origin[1]+j*d+d/2.,origin[2]+k*d+d/2.] 
+          ijk = np.array([i,j,k])
+          center = origin + ijk * step + step / 2.
           if center[0]>x1 and center[0]<x2 and center[1]>y1 and center[1]<y2 and center[2]>z1 and center[2]<z2:
             local_center = center - translation
             #rotate cell center coordinates to xyz of fracture
@@ -158,14 +164,17 @@ def map_dfn(ellipses, origin, nx, ny, nz, d):
             if rsq_cell < np.square(xrad): 
               #center is in radius, so check if fracture intersects cell
               #find z of cell corners in xyz of fracture
-              corner = [[origin[0]+i*d, origin[1]+j*d, origin[2]+k*d],
-                       [origin[0]+(i+1)*d, origin[1]+j*d, origin[2]+k*d],
-                       [origin[0]+(i+1)*d, origin[1]+(j+1)*d, origin[2]+k*d],
-                       [origin[0]+i*d, origin[1]+(j+1)*d, origin[2]+k*d],
-                       [origin[0]+i*d, origin[1]+j*d, origin[2]+(k+1)*d],
-                       [origin[0]+(i+1)*d, origin[1]+j*d, origin[2]+(k+1)*d],
-                       [origin[0]+(i+1)*d, origin[1]+(j+1)*d, origin[2]+(k+1)*d],
-                       [origin[0]+i*d, origin[1]+(j+1)*d, origin[2]+(k+1)*d]]
+
+              # corner = [[origin[0] + i * step, origin[1] + j * step, origin[2] + k * step],
+              #           [origin[0] + (i+1) * step, origin[1] + j * step, origin[2] + k * step],
+              #           [origin[0] + (i+1) * step, origin[1] + (j + 1) * step, origin[2] + k * step],
+              #           [origin[0] + i * step, origin[1] + (j + 1) * step, origin[2] + k * step],
+              #           [origin[0] + i * step, origin[1] + j * step, origin[2] + (k + 1) * step],
+              #           [origin[0] + (i+1) * step, origin[1] + j * step, origin[2] + (k + 1) * step],
+              #           [origin[0] + (i+1) * step, origin[1] + (j + 1) * step, origin[2] + (k + 1) * step],
+              #           [origin[0] + i * step, origin[1] + (j + 1) * step, origin[2] + (k + 1) * step]]
+
+              corner = origin[None, :] + (ijk[None, :] + rel_corner[: , :]) * step[None, :]
               maxz = 0.
               minz = 0.
               for c in range(len(corner)):
