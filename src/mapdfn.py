@@ -6,6 +6,9 @@
    perm.dat, aperture.dat
    and map dfn into a regular grid for continuous porous medium representation
 
+   Rewritten  by Jan Březina
+   The fractures just mark the intersecting cells, then fracture is considered to intersect whole cell boundaries.
+
    Usage: Call the methods in this script with map.py
 
    Dependencies: transformations.py copyright Christoph Gohlke and UC Regents
@@ -22,215 +25,196 @@
    SAND Number: SAND2018-7604 O
 '''
 
-
+from typing import *
+from pathlib import Path
 import time
 import numpy as np
+import csv
 import transformations as tr
 from h5py import File
+from dataclasses import dataclass
+import itertools
 
-def readEllipse(radiifile='radii_Final.dat',
-                normalfile='normal_vectors.dat',
-                transfile='translations.dat'):
-  '''Read dfnWorks-Version2.0 output files describing radius, orientation, and
-     location of fractures in space.
-     Subsequent methods assume elliptical (in fact circular) fractures.
-     Return a list of dictionaries describing each ellipse.
-  '''
-  ellipses = []
-  with open(radiifile,'r') as f:
-    radii = f.readlines() #two lines to get rid of at top of file
-  radii.pop(0)
-  radii.pop(0)
-  with open(normalfile, 'r') as f:
-    normals = f.readlines() #no lines to get rid of at top of file
-  with open(transfile, 'r') as f:
-    temp = f.readlines() #one line to get rid of at top of file
-  temp.pop(0)
-  translations = []
-  for line in temp:
-    if line.split()[-1] != 'R':
-      translations.append(line)
-  print(len(radii))
-  print(len(normals))
-  print(len(translations))
-  for i in range(len(radii)):
-    ellipses.append( {'normal':np.zeros((3),dtype=np.float),'translation':np.zeros((3),dtype=np.float),'xrad':0.0,'yrad':0.0} )
-    ellipses[i]['normal'][0] = float(normals[i].split()[0])
-    ellipses[i]['normal'][1] = float(normals[i].split()[1])
-    ellipses[i]['normal'][2] = float(normals[i].split()[2])
-    ellipses[i]['translation'][0] = float(translations[i].split()[0])
-    ellipses[i]['translation'][1] = float(translations[i].split()[1])
-    ellipses[i]['translation'][2] = float(translations[i].split()[2])
-    ellipses[i]['xrad'] = float(radii[i].split()[0])
-    ellipses[i]['yrad'] = float(radii[i].split()[1])
-  
-  return ellipses
+@dataclass
+class Grid:
+    origin: np.array # 3d point
+    step: np.array   # cell dimensions in XYZ
+    dimensions: np.array  # int, number of cells in XYZ
 
-def findT(aperturefile='aperture.dat', 
-          permfile='perm.dat'):
-  '''Read dfnWorks-Version2.0 output files describing fracture aperture and 
+
+@dataclass
+class Ellipse:
+    normal: np.array
+    # 3D normal vector
+    translation: np.array
+    # 3D translation vector
+    radius: np.array
+    # (x_radius, y_ radius) before transformation
+
+
+@dataclass
+class Fracture:
+    ellipse: Ellipse
+    cells: List[int]
+
+__radiifile='radii.dat'
+__normalfile='normal_vectors.dat'
+__transfile='translations.dat'
+__permfile='perm.dat'
+__aperturefile='aperture.dat'
+
+def read_dfn_file(f_path):
+    with open(f_path, 'r') as file:
+        rdr = csv.reader(filter(lambda row: row[0] != '#', file), delimiter=' ', skipinitialspace=True)
+        return [row for row in rdr]
+    return data
+
+def readEllipse(workdir: Path, ):
+    '''Read dfnWorks-Version2.0 output files describing radius, orientation, and
+       location of fractures in space.
+       Subsequent methods assume elliptical (in fact circular) fractures.
+       Return a list of dictionaries describing each ellipse.
+    '''
+
+    radii = np.array(read_dfn_file(workdir / __radiifile), dtype=float)
+    shape_family = radii[:, 2]
+    radii = radii[:, 0:2]
+    assert radii.shape[1] == 2
+    # with open(radiifile,'r') as f:
+    #   radii = f.readlines() #two lines to get rid of at top of file
+    # radii.pop(0)
+    # radii.pop(0)
+    normals = np.array(read_dfn_file(workdir / __normalfile), dtype=float)
+    assert normals.shape[1] == 3
+    # with open(normalfile, 'r') as f:
+    #   normals = f.readlines() #no lines to get rid of at top of file
+    translations = np.array([t for  t in read_dfn_file(workdir / __transfile) if t[-1] != 'R'], dtype=float)
+    assert translations.shape[1] == 3
+    # with open(transfile, 'r') as f:
+    #   temp = f.readlines() #one line to get rid of at top of file
+    # temp.pop(0)
+    # translations = []
+    # for line in temp:
+    #   if line.split()[-1] != 'R':
+    #     translations.append(line)
+    print(len(radii))
+    print(len(normals))
+    print(len(translations))
+    ellipses = [Ellipse(np.array(n), np.array(t), np.array(r)) for n, t, r in zip(normals, translations, radii)]
+    # for i in range(len(radii)):
+    #     ellipses.append( {'normal':np.zeros((3),dtype=np.float),'translation':np.zeros((3),dtype=np.float),'xrad':0.0,'yrad':0.0} )
+    #     ellipses[i]['normal'][0] = float(normals[i].split()[0])
+    #     ellipses[i]['normal'][1] = float(normals[i].split()[1])
+    #     ellipses[i]['normal'][2] = float(normals[i].split()[2])
+    #     ellipses[i]['translation'][0] = float(translations[i].split()[0])
+    #     ellipses[i]['translation'][1] = float(translations[i].split()[1])
+    #     ellipses[i]['translation'][2] = float(translations[i].split()[2])
+    #     ellipses[i]['xrad'] = float(radii[i].split()[0])
+    #     ellipses[i]['yrad'] = float(radii[i].split()[1])
+
+    return ellipses
+
+def fr_transmissivity_apperture(workdir):
+    '''Read dfnWorks-Version2.0 output files describing fracture aperture and
      permeability.
      Return list containing transmissivity for each fracture.
-  '''
-  with open(aperturefile,'r') as f:
-    apertures = f.readlines() #one line to get rid of at top of file
-  apertures.pop(0)
-  with open(permfile,'r') as f:
-    perms = f.readlines() #one line to get rid of at top of file
-  perms.pop(0)
-  T = []
-  for i in range(len(perms)):
-    aperture = float(apertures[i].split()[3])
-    perm = float(perms[i].split()[3])
-    T.append(aperture*perm)
+    '''
 
-  return T
+    # from both files use just third column
+    permeability = np.array(read_dfn_file(workdir / __permfile), dtype=float)[:, 3]
+    apperture = np.array(read_dfn_file(workdir / __aperturefile), dtype=float)[:, 3]
+    return permeability * apperture, apperture
 
-def map_dfn(ellipses, origin, nx, ny, nz, step):
-  '''Identify intersecting fractures for each cell of the ECPM domain.
+__rel_corner = np.array([[0, 0, 0], [1, 0, 0],
+                         [1, 1, 0], [0, 1, 0],
+                         [0, 0, 1], [1, 0, 1],
+                         [1, 1, 1], [0, 1, 1]])
+
+def intersect_cell(loc_corners: np.array, ellipse: Ellipse) -> bool:
+    """
+    loc_corners - shape (3, 8)
+    """
+    # check if cell center is inside radius of fracture
+    center = np.mean(loc_corners, axis=1)
+    if np.sum(np.square(center[0:2] / ellipse.radius)) >= 1:
+        return False
+
+    # cell center is in ellipse
+    # find z of cell corners in xyz of fracture
+
+    if np.min(loc_corners[2, :]) >= 0. or np.max(loc_corners[2, :]) <= 0.:  # fracture lies in z=0 plane
+        # fracture intersects that cell
+        return False
+
+    return True
+
+def fracture_for_ellipse(grid: Grid, ellipse: Ellipse) -> Fracture:
+    # calculate rotation matrix for use later in rotating coordinates of nearby cells
+    direction = np.cross([0,0,1], ellipse.normal)
+    #cosa = np.dot([0,0,1],normal)/(np.linalg.norm([0,0,1])*np.linalg.norm(normal)) #frobenius norm = length
+    #above evaluates to normal[2], so:
+    angle = np.arccos(ellipse.normal[2]) # everything is in radians
+    mat_to_local = tr.rotation_matrix(angle, direction)[:3, :3]
+    #find fracture in domain coordinates so can look for nearby cells
+    b_box_min = ellipse.translation - np.max(ellipse.radius)
+    b_box_max = ellipse.translation + np.max(ellipse.radius)
+    i_box_min = (b_box_min - grid.origin) / grid.step
+    i_box_max = (b_box_max - grid.origin) / grid.step + 1
+    axis_ranges = [range(max(0, a), min(b, n)) for a, b, n in zip(i_box_min.astype(int), i_box_max.astype(int), grid.dimensions)]
+
+    grid_cumul_prod = np.array([1, grid.dimensions[0], grid.dimensions[0] * grid.dimensions[1]])
+    cells = []
+    for ijk in itertools.product(*axis_ranges):
+        ijk = np.array(ijk)
+        corners = grid.origin[None, :] + (ijk[None, :] + __rel_corner[:, :]) * grid.step[None, :]
+        loc_corners = mat_to_local @ (corners - ellipse.translation).T
+        if intersect_cell(loc_corners, ellipse):
+            cell_index = ijk @ grid_cumul_prod
+            cells.append(cell_index)
+    return Fracture(ellipse, cells)
+
+def map_dfn(grid, ellipses):
+    '''Identify intersecting fractures for each cell of the ECPM domain.
      Extent of ECPM domain is determined by nx,ny,nz, and d (see below).
      ECPM domain can be smaller than the DFN domain.
      Return numpy array (fracture) that contains for each cell:
      number of intersecting fractures followed by each intersecting fracture id.
 
-     ellipses = list of dictionaries containing normal, translation, xrad, 
+     ellipses = list of dictionaries containing normal, translation, xrad,
                 and yrad for each fracture
      origin = [x,y,z] float coordinates of lower left front corner of DFN domain
      nx = int number of cells in x in ECPM domain
      ny = int number of cells in y in ECPM domain
      nz = int number of cells in z in ECPM domain
      step = [float, float, float] discretization length in ECPM domain
-  '''
-  rel_corner = np.array([[0, 0, 0], [1, 0, 0],
-                         [1, 1, 0], [0, 1, 0],
-                         [0, 0, 1], [1, 0, 1],
-                         [1, 1, 1], [0, 1, 1]])
 
-  ncell = nx*ny*nz
-  nfrac = len(ellipses)
-  fracture = np.zeros((ncell,10), dtype=np.int)
+     JB TODO: allow smaller ECPM domain
+    '''
+    return [fracture_for_ellipse(grid, ellipse) for ellipse in ellipses]
 
-  t0 = time.time()
- # mod = nfrac/10
-  for f in range(nfrac): 
- #   if f%mod == 0:
-    print('Mapping ellipse %i of %i.' %(f,nfrac))
-    tnow = time.time() - t0
-    print('Time elapsed in map_dfn() = %f.' %(tnow))
-    normal = ellipses[f]['normal']
-    translation = ellipses[f]['translation']
-    xrad = ellipses[f]['xrad']
-    yrad = ellipses[f]['yrad']
-    #calculate rotation matrix for use later in rotating coordinates of nearby cells
-    direction = np.cross([0,0,1],normal)
-    #cosa = np.dot([0,0,1],normal)/(np.linalg.norm([0,0,1])*np.linalg.norm(normal)) #frobenius norm = length
-    #above evaluates to normal[2], so:
-    angle = np.arccos(normal[2]) # everything is in radians
-    M = tr.rotation_matrix(angle,direction)
-    #find fracture in domain coordinates so can look for nearby cells
-    if xrad > yrad:
-      x1 = translation[0]-xrad
-      x2 = translation[0]+xrad
-      y1 = translation[1]-xrad
-      y2 = translation[1]+xrad
-      z1 = translation[2]-xrad
-      z2 = translation[2]+xrad
-    else: #this else is misleading because script only works on circles
-      x1 = translation[0]-yrad
-      x2 = translation[0]+yrad
-      y1 = translation[1]-yrad
-      y2 = translation[1]+yrad
-      z1 = translation[2]-yrad
-      z2 = translation[2]+yrad
-    #find indices of nearby cells so don't have to check all of them!
-    i1 = max(0, int((x1-origin[0]) / step[0])) #round down
-    i2 = min(nx, int((x2-origin[0]) / step[0] + 1)) #round up
-    j1 = max(0, int((y1-origin[1]) / step[1]))
-    j2 = min(ny, int((y2-origin[1]) / step[1] + 1))
-    k1 = max(0, int((z1-origin[2]) / step[2]))
-    k2 = min(nz, int((z2-origin[2]) / step[2] + 1))
-    for k in range(k1,k2): #for cells close to fracture
-      for j in range(j1,j2):
-        for i in range(i1,i2):
-          #check if cell center is inside radius of fracture
-          ijk = np.array([i,j,k])
-          center = origin + ijk * step + step / 2.
-          if center[0]>x1 and center[0]<x2 and center[1]>y1 and center[1]<y2 and center[2]>z1 and center[2]<z2:
-            local_center = center - translation
-            #rotate cell center coordinates to xyz of fracture
-            rotate_center = np.dot(local_center, M[:3,:3]) 
-            #calculate r^2 of cell center in xy of fracture (fracture lies in z=0 plane)
-            rsq_cell = np.square(rotate_center[0]) + np.square(rotate_center[1])
-            if rsq_cell < np.square(xrad): 
-              #center is in radius, so check if fracture intersects cell
-              #find z of cell corners in xyz of fracture
 
-              # corner = [[origin[0] + i * step, origin[1] + j * step, origin[2] + k * step],
-              #           [origin[0] + (i+1) * step, origin[1] + j * step, origin[2] + k * step],
-              #           [origin[0] + (i+1) * step, origin[1] + (j + 1) * step, origin[2] + k * step],
-              #           [origin[0] + i * step, origin[1] + (j + 1) * step, origin[2] + k * step],
-              #           [origin[0] + i * step, origin[1] + j * step, origin[2] + (k + 1) * step],
-              #           [origin[0] + (i+1) * step, origin[1] + j * step, origin[2] + (k + 1) * step],
-              #           [origin[0] + (i+1) * step, origin[1] + (j + 1) * step, origin[2] + (k + 1) * step],
-              #           [origin[0] + i * step, origin[1] + (j + 1) * step, origin[2] + (k + 1) * step]]
+def porosity(grid: Grid, fractures: List[Fracture], fr_apperture: np.array, bulk_por: float) -> np.array:
+    '''Calculate fracture porosity for each cell of ECPM intersected by
+       one or more fractures. Simplifying assumptions: 1) each fracture crosses
+       the cell parallel to cell faces, 2) each fracture completely crosses the cell.
+       Assign bulk porosity to cells not intersected by fractures.
+       Return numpy array of porosity for each cell in the ECPM domain.
 
-              corner = origin[None, :] + (ijk[None, :] + rel_corner[: , :]) * step[None, :]
-              maxz = 0.
-              minz = 0.
-              for c in range(len(corner)):
-                rotate_corner = np.dot(corner[c]-translation, M[:3,:3]) 
-                if rotate_corner[2] > maxz:
-                  maxz = rotate_corner[2]
-                elif rotate_corner[2] < minz:
-                  minz = rotate_corner[2]
-              #and store min and max values of z at corners
-              if minz < 0. and maxz > 0.: #fracture lies in z=0 plane
-                #fracture intersects that cell
-                index = i+nx*j+nx*ny*k
-                fracture[index][0] +=1 #store number of fractures that intersect cell
-                if fracture[index][0] > 9:
-                  print('Number of fractures in cell %d exceeds allotted memory.' %index)
-                  return
-                fracture[index][fracture[index][0]] = f+1
-
-  return fracture
-    
-def porosity(fracture,d,bulk_por,aperturefile='aperture.dat'):
-  '''Calculate fracture porosity for each cell of ECPM intersected by
-     one or more fractures. Simplifying assumptions: 1) each fracture crosses
-     the cell parallel to cell faces, 2) each fracture completely crosses the cell.
-     Assign bulk porosity to cells not intersected by fractures.
-     Return numpy array of porosity for each cell in the ECPM domain.
-
-     fracture = numpy array containing number of fractures in each cell, list of fracture numbers in each cell
-     d = float length of cell side
-     bulk_por = float bulk porosity (which would normally be larger than fracture porosity)
-  '''
-  with open(aperturefile,'r') as f:
-    temp = f.readlines()
-  temp.pop(0)
-  apertures = []
-  for i in range(len(temp)):
-    apertures.append(float(temp[i].split()[3]))
+       fracture = numpy array containing number of fractures in each cell, list of fracture numbers in each cell
+       d = float length of cell side
+       bulk_por = float bulk porosity (which would normally be larger than fracture porosity)
+    '''
+    porosity = np.zeros(grid.dimensions.prod(), dtype=float)
+    for fr, a in zip(fractures, fr_apperture):
+        if fr.cells:
+            normal_axis = np.argmax(np.abs(fr.ellipse.normal))
+            # porosity[fr.cells] += a  / grid.step[normal_axis]
+            porosity[fr.cells] += 1
+    porosity = bulk_por + porosity * (1 - bulk_por)
+    return porosity
   
-  t0 = time.time()
-  ncell = fracture.shape[0]
-  porosity = np.zeros((ncell),'=f8')
-  for i in range(ncell):
-    if fracture[i][0] == 0:
-      porosity[i] = bulk_por
-    else: #there are fractures in this cell
-      for j in range(1,fracture[i][0]+1):  
-        fracnum = fracture[i][j]
-        porosity[i] += apertures[fracnum-1]/d #aperture is 0 indexed, fracture numbers are 1 indexed
-
-  t1 = time.time()
-  print('Time spent in porosity() = %f.' %(t1-t0))
-
-  return porosity
-  
-def permIso(fracture,T,d,k_background):
-  '''Calculate isotropic permeability for each cell of ECPM intersected by
+def permIso(grid: Grid, fractures: List[Fracture], fr_transmisivity: np.array, k_background: float) -> np.array:
+    '''Calculate isotropic permeability for each cell of ECPM intersected by
      one or more fractures. Sums fracture transmissivities and divides by 
      cell length (d) to calculate cell permeability.
      Assign background permeability to cells not intersected by fractures.
@@ -240,21 +224,14 @@ def permIso(fracture,T,d,k_background):
      T = [] containing intrinsic transmissivity for each fracture
      d = length of cell sides
      k_background = float background permeability for cells with no fractures in them
-  '''
-  t0 = time.time()
-  ncell = fracture.shape[0]
-  k_iso = np.full((ncell),k_background,'=f8')
-  for i in range(ncell):
-    if fracture[i][0] != 0:
-      for j in range(1,fracture[i][0]+1):
-        fracnum = fracture[i][j]
-        k_iso[i] += T[fracnum-1]/d #T is 0 indexed, fracture numbers are 1 indexed
+    '''
+    k_iso = np.full(grid.dimensions.prod(), k_background, dtype=float)
+    for fr, a in zip(fractures, fr_transmisivity):
+        normal_axis = np.argmax(np.abs(fr.ellipse.normal))
+        k_iso[fr.cells] += a / grid.step[normal_axis]
+    return k_iso
 
-  t1 = time.time()
-  print('Time spent in permIso() = %f.' %(t1-t0))
 
-  return k_iso
-      
 def permAniso(fracture,ellipses,T,d,k_background,LUMP=0):
   '''Calculate anisotropic permeability tensor for each cell of ECPM
      intersected by one or more fractures. Discard off-diagonal components
