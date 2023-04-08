@@ -96,7 +96,7 @@ class DFN:
 
     def main_output(self):
 
-        self.xyz = [o + np.linspace(0, 1, n) for o, n in zip(self.grid.origin, self.grid.dimensions)]
+        self.xyz = [o + s * np.arange(0, n + 1) for o, n, s in zip(self.grid.origin, self.grid.dimensions, self.grid.step)]
 
         # first fracture index per cell
         self.fracture_idx = np.full(self.grid.dimensions.prod(), -1, dtype=float)
@@ -106,9 +106,9 @@ class DFN:
         # Write same information to mapELLIPSES.h5. This file can be opened in Paraview
         # by chosing "PFLOTRAN file" as the format.
         with field_file('mapELLIPSES.h5') as ff:
-            ff.create_dataset('Coordinates/X [m]', data=self.xyz[0])
-            ff.create_dataset('Coordinates/Y [m]', data=self.xyz[1])
             ff.create_dataset('Coordinates/Z [m]', data=self.xyz[2])
+            ff.create_dataset('Coordinates/Y [m]', data=self.xyz[1])
+            ff.create_dataset('Coordinates/X [m]', data=self.xyz[0])
             ff.create_dataset('Time:  0.00000E+00 y/Perm', data=self.k_iso)
             ff.create_dataset('Time:  0.00000E+00 y/Fracture', data=self.fracture_idx)
             #ff.create_dataset('Time:  0.00000E+00 y/PermX', data=kx)

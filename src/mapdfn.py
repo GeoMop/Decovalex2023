@@ -154,7 +154,7 @@ def fracture_for_ellipse(grid: Grid, ellipse: Ellipse) -> Fracture:
     #cosa = np.dot([0,0,1],normal)/(np.linalg.norm([0,0,1])*np.linalg.norm(normal)) #frobenius norm = length
     #above evaluates to normal[2], so:
     angle = np.arccos(ellipse.normal[2]) # everything is in radians
-    mat_to_local = tr.rotation_matrix(angle, direction)[:3, :3]
+    mat_to_local = tr.rotation_matrix(angle, direction)[:3, :3].T
     #find fracture in domain coordinates so can look for nearby cells
     b_box_min = ellipse.translation - np.max(ellipse.radius)
     b_box_max = ellipse.translation + np.max(ellipse.radius)
@@ -164,8 +164,10 @@ def fracture_for_ellipse(grid: Grid, ellipse: Ellipse) -> Fracture:
 
     grid_cumul_prod = np.array([1, grid.dimensions[0], grid.dimensions[0] * grid.dimensions[1]])
     cells = []
-    for ijk in itertools.product(*axis_ranges):
-        ijk = np.array(ijk)
+    # X fastest running
+    for ijk in itertools.product(*reversed(axis_ranges)):
+        # make X the first coordinate
+        ijk = np.flip(np.array(ijk))
         corners = grid.origin[None, :] + (ijk[None, :] + __rel_corner[:, :]) * grid.step[None, :]
         loc_corners = mat_to_local @ (corners - ellipse.translation).T
         if intersect_cell(loc_corners, ellipse):
@@ -192,6 +194,8 @@ def map_dfn(grid, ellipses):
     '''
     return [fracture_for_ellipse(grid, ellipse) for ellipse in ellipses]
 
+def arange_for_hdf5(grid, a):
+    return a.reshape(grid.dimensions).transpose([2,1,0])
 
 def porosity(grid: Grid, fractures: List[Fracture], fr_apperture: np.array, bulk_por: float) -> np.array:
     '''Calculate fracture porosity for each cell of ECPM intersected by
@@ -211,8 +215,11 @@ def porosity(grid: Grid, fractures: List[Fracture], fr_apperture: np.array, bulk
             # porosity[fr.cells] += a  / grid.step[normal_axis]
             porosity[fr.cells] += 1
     porosity = bulk_por + porosity * (1 - bulk_por)
-    return porosity
-  
+    return arange_for_hdf5(grid, porosity)
+
+
+
+
 def permIso(grid: Grid, fractures: List[Fracture], fr_transmisivity: np.array, k_background: float) -> np.array:
     '''Calculate isotropic permeability for each cell of ECPM intersected by
      one or more fractures. Sums fracture transmissivities and divides by 
@@ -229,7 +236,7 @@ def permIso(grid: Grid, fractures: List[Fracture], fr_transmisivity: np.array, k
     for fr, a in zip(fractures, fr_transmisivity):
         normal_axis = np.argmax(np.abs(fr.ellipse.normal))
         k_iso[fr.cells] += a / grid.step[normal_axis]
-    return k_iso
+    return arange_for_hdf5(grid, k_iso)
 
 
 def permAniso(fracture,ellipses,T,d,k_background,LUMP=0):
