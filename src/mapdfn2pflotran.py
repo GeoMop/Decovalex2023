@@ -24,7 +24,8 @@ from pathlib import Path
 import numpy as np
 import mapdfn
 from h5py import File
-
+import yaml
+import attrs
 
 
 
@@ -61,36 +62,34 @@ def add_field(grid, f, name, data_array):
     h5grp.attrs['Interpolation Method'] = np.string_('Step')
     h5grp.create_dataset('Data', data=data_array)
 
+@attrs.define
+class RockMass:
+    permeability: float
+    porosity: float
+    tortuosity_factor: float
 
 class DFN:
     def __init__(self, workdir):
-        self.config()
-        self.create_dfn(workdir)
+        self.config(workdir)
+        self.create_dfn(workdir / 'input_dfn')
 
-    def config(self):
-        # Edit these values
-        self.grid = mapdfn.Grid(
-            origin=np.array([-500, -500, -500]),
-            step=np.array([50, 50, 50]),
-            dimensions=np.array([20, 20, 20], dtype=int)
-        )
-        self.k_background = 1.e-24
-        self.bulk_por = 0.005
-        self.tortuosity_factor = 0.001
+    def config(self, workdir: Path):
+        with open(workdir / "main.yaml") as f:
+            cfg = yaml.load(f, Loader=yaml.SafeLoader)
 
-        # origin of mapping in cpm domain (0,0,0 is origin of CPM, though it doesn't have to be)
-        self.dfn_origin = [-500, -500, -500]
-        # origin of area to map in DFN domain coordinates (0,0,0 is center of DFN)
+        self.grid = mapdfn.Grid(**cfg['grid'])
+        self.rock_mass = RockMass(**cfg['rock'])
+        self.dfn_origin = cfg['dfn_origin']
 
-    def create_dfn(self, workdir):
+    def create_dfn(self, workdir: Path):
         # Call mapdfn functions
         print('Mapping DFN to grid')
         self.ellipses = mapdfn.readEllipse(workdir)
         self.fractures = mapdfn.map_dfn(self.grid, self.ellipses)
         print('Calculating effective k')
         transmissivity, appertre = mapdfn.fr_transmissivity_apperture(workdir)
-        self.porosity = mapdfn.porosity(self.grid, self.fractures, appertre, self.bulk_por).reshape(self.grid.dimensions)
-        self.k_iso = mapdfn.permIso(self.grid, self.fractures, transmissivity, self.k_background).reshape(self.grid.dimensions)
+        self.porosity = mapdfn.porosity(self.grid, self.fractures, appertre, self.rock_mass.porosity).reshape(self.grid.dimensions)
+        self.k_iso = mapdfn.permIso(self.grid, self.fractures, transmissivity, self.rock_mass.permeability).reshape(self.grid.dimensions)
         # k_aniso = mapdfn.permAniso(fracture, ellipses, transmissivity, self.grid_step, self.k_background)
         print('Calculating fracture permeability')
 
@@ -123,7 +122,7 @@ class DFN:
             add_field(self.grid, f, 'Porosity', self.porosity)
 
         with field_file('tortuosity.h5') as f:
-            add_field(self.grid, f, 'Tortuosity', self.tortuosity_factor / self.porosity)
+            add_field(self.grid, f, 'Tortuosity', self.rock_mass.tortuosity_factor / self.porosity)
 
         # with field_file('anisotropic_k.h5') as f:
         #     add_field(f, 'PermeabilityX', kx)
@@ -132,7 +131,7 @@ class DFN:
 
         iarray = np.arange(1, self.grid.dimensions.prod() + 1, dtype=int)
         marray = np.zeros(self.grid.dimensions.prod(), dtype=int)
-        marray[self.k_iso.flatten() == self.k_background] = 1
+        marray[self.k_iso.flatten() == self.rock_mass.permeability] = 1
         with field_file('materials.h5') as f:
             group = f.create_group("Materials")
             group.create_dataset('Cell Ids', data=iarray)

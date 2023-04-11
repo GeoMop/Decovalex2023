@@ -1,0 +1,30 @@
+grid:
+    origin: [-500, -500, -500]
+    step: [50, 50, 50]
+    dimensions: [20, 20, 20]
+    
+rock:
+    # rock matrix / intact rock properties
+    permeability: 1.e-24
+    porosity: 0.0005
+    tortuosity_factor: 0.001
+    
+dfn_origin: [-500, -500, -500] 
+
+# Repository according to Decovalex setting    
+repository:
+    # Consists of several blocks of parallel lines, algorithm marks cells intersected by lines
+    # Only axis paralell directions are suppoXrted right now.
+    - origin: [540, 1020, 450]
+      drift_direction: [0, 1, 0]     # X, Y, Z 
+      drift_lengh: 300
+      drift_step: [40, 0, 0]
+      n_drifts: 25
+      hole_spacing: 6
+      
+    - origin: [540, 980, 450]
+      drift_direction: [0, -1, 0]     # X, Y, Z 
+      drift_lengh: 300
+      drift_step: [40, 0, 0]
+      n_drifts: 25
+      hole_spacing: 6

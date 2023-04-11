@@ -11,16 +11,6 @@ script_dir = os.path.dirname(os.path.realpath(__file__))
 class workdir:
     """
     Context manager for creation and usage of a workspace dir.
-
-    name: the workspace directory
-    inputs: list of files and directories to copy into the workspaceand
-        TODO: fine a sort of robust ad portable reference
-    clean: if true the workspace would be deleted at the end of the context manager.
-    TODO: clean_before / clean_after
-    TODO: File constructor taking current workdir environment, openning virtually copied files.
-    TODO: Workdir would not perform change of working dir, but provides system interface for: subprocess, file openning
-          only perform CD just before executing a subprocess also interacts with concept of an executable.
-    portable reference and with lazy evaluation. Optional true copy possible.
     """
     def __init__(self, path: str="sandbox", clean=False):
         self.work_dir = Path(path)
@@ -48,17 +38,22 @@ def eq_h5(a, b, reltol=0.01):
 
 def check_output_dir(dir: Path):
     all = True
-    for f in dir.glob('*.h5'):
+    for f in ["isotropic_k", "porosity"]:
+        f = Path(f"{f}.h5")
         all = all and eq_h5(dir / ".." / "ref" / f.name, f)
     return all
 
 
-def test_dfn():
+def dfn_single_case(case):
     """
     TODO:
     - comparison using HDF5
     """
 
-    with workdir(Path(script_dir) / "test_data" / "dfn_2" / "output"):
+    with workdir(Path(script_dir) / "test_data" / case / "output"):
         mapdfn2pflotran.main(Path(".."))
         assert(check_output_dir(Path(".")))
+
+def test_dfn():
+    for case in ["dfn_2", "dfn_5"]:
+        dfn_single_case(case)

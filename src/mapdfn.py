@@ -25,34 +25,42 @@
    SAND Number: SAND2018-7604 O
 '''
 
-from typing import *
-from pathlib import Path
-import time
-import numpy as np
 import csv
-import transformations as tr
-from h5py import File
-from dataclasses import dataclass
 import itertools
+import time
+from pathlib import Path
+from typing import *
 
-@dataclass
+import attrs
+import numpy as np
+
+import transformations as tr
+
+
+def float_array(x: List[float]) -> np.array:
+    return np.array(x, dtype=float)
+
+def int_array(x: List[float]) -> np.array:
+    return np.array(x, dtype=int)
+
+@attrs.define
 class Grid:
-    origin: np.array # 3d point
-    step: np.array   # cell dimensions in XYZ
-    dimensions: np.array  # int, number of cells in XYZ
+    origin: np.array = attrs.field(converter=int_array) # 3d point
+    step: np.array   = attrs.field(converter=int_array) # cell dimensions in XYZ
+    dimensions: np.array  = attrs.field(converter=int_array) # int, number of cells in XYZ
 
 
-@dataclass
+@attrs.define
 class Ellipse:
-    normal: np.array
+    normal: np.array = attrs.field(converter=float_array)
     # 3D normal vector
-    translation: np.array
+    translation: np.array = attrs.field(converter=float_array)
     # 3D translation vector
-    radius: np.array
+    radius: np.array = attrs.field(converter=float_array)
     # (x_radius, y_ radius) before transformation
 
 
-@dataclass
+@attrs.define
 class Fracture:
     ellipse: Ellipse
     cells: List[int]
@@ -199,21 +207,18 @@ def arange_for_hdf5(grid, a):
 
 def porosity(grid: Grid, fractures: List[Fracture], fr_apperture: np.array, bulk_por: float) -> np.array:
     '''Calculate fracture porosity for each cell of ECPM intersected by
-       one or more fractures. Simplifying assumptions: 1) each fracture crosses
-       the cell parallel to cell faces, 2) each fracture completely crosses the cell.
-       Assign bulk porosity to cells not intersected by fractures.
-       Return numpy array of porosity for each cell in the ECPM domain.
+       one or more fractures. Simplifying assumptions:
+       1. each fracture crosses the cell parallel to cell faces,
+       2. each fracture completely crosses the cell.
+       3. fracture volume has porosity 1, matrix has porosity `bulk_por`
 
-       fracture = numpy array containing number of fractures in each cell, list of fracture numbers in each cell
-       d = float length of cell side
-       bulk_por = float bulk porosity (which would normally be larger than fracture porosity)
+       fr_apperture: array of appertures of the `fractures`
     '''
     porosity = np.zeros(grid.dimensions.prod(), dtype=float)
     for fr, a in zip(fractures, fr_apperture):
         if fr.cells:
             normal_axis = np.argmax(np.abs(fr.ellipse.normal))
-            # porosity[fr.cells] += a  / grid.step[normal_axis]
-            porosity[fr.cells] += 1
+            porosity[fr.cells] += a  / grid.step[normal_axis]
     porosity = bulk_por + porosity * (1 - bulk_por)
     return arange_for_hdf5(grid, porosity)
 
