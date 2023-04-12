@@ -1,8 +1,35 @@
 # Decovalex2023
 
+Tool for upsaling of a Discrete Fracture Network and repository sources into eqivalent 
+heterogeneous continuum on a structed PFlotran grid.
+
+Based on original SANDIA scripts (see below).
+
+
+## Instalation
+Installation to user space (no root / administrator rights required). 
+
+From local sources in a `decovalex` directory:
+
+    ```
+    python3 -m pip install ./decovalex
+    ```
+You can clone the git repository (get sources) by:
+    
+    ```
+    git clone https://github.com/GeoMop/Decovalex2023.git
+    ```
+
+Directly from the github repository:
+    ```
+    python3 -m pip install "decovalex @ git+https://github.com/GeoMop/Decovalex2023
+    ``` 
+    
+
 
 ## Repository structure
-- `src` : homogenization scripts
+- `decodfn` 
+    - `main.py` : the main script, the `main()` called by the command `decodfn`
 - `tests` : test calculations 
     - `dfn_253` : test sample of 253 fractures
     - `repo_multiscale` : basic multiscale repository model
@@ -31,3 +58,13 @@ tortuosity.h5
 V paraview je třeba otevřít ten mapellipses. Načte si nějak ty zbylé a v menu načtených dat to rovnou nabídne k zaškrtnutí pole veličin, které se mají načíst (K, poro, index pukliny,...). Pak už se běžně ještě přepne zobrazení že má být surface a že colouring pole toho datového pole. 
 
 4) Adresář se skriptem pro generování .h5 pro okrajovou podmínku. Jak je to přesně dělané jsem nestudoval. To si vytvářel sám Ondrej Mikláš.
+
+## Original scripts authors
+
+Authors: Emily Stein (ergiamb@sandia.gov)
+        Kris Kuhlman (klkuhl@sandia.gov)
+        Applied Systems Analysis and Research, 8844
+        Sandia National Laboratories
+
+Date: 07/13/18
+SAND Number: SAND2018-7604 O
