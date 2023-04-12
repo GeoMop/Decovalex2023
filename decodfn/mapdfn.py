@@ -1,30 +1,3 @@
-'''
-   mapdfn.py
-
-   Take output of dfnWorks-Version2.0:
-   normal_vectors.dat, translations.dat, radii_Final.dat,
-   perm.dat, aperture.dat
-   and map dfn into a regular grid for continuous porous medium representation
-
-   Rewritten  by Jan Březina
-   The fractures just mark the intersecting cells, then fracture is considered to intersect whole cell boundaries.
-
-   Usage: Call the methods in this script with map.py
-
-   Dependencies: transformations.py copyright Christoph Gohlke and UC Regents
-                 numpy
-                 h5py
-                 time
-
-   Authors: Emily Stein (ergiamb@sandia.gov)
-            Kris Kuhlman (klkuhl@sandia.gov)
-            Applied Systems Analysis and Research, 8844
-            Sandia National Laboratories
-
-   Date: 07/13/18
-   SAND Number: SAND2018-7604 O
-'''
-
 import csv
 import itertools
 import time

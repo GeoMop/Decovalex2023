@@ -1,34 +1,20 @@
-'''
-Usage:
-    python mapdfn2pflotran.py <workdir>
-
-Uses mapdfn.py to take output of dfnWorks-Version2.0, create
-equivalent continuous porous medium representation, and write parameters
-(permeability, porosity, tortuosity) to files for use with PFLOTRAN.
-
-   Usage: Edit values for origin, nx, ny, nz, d, k_background, bulk_por,
-          tortuosity factor, and h5origin.
-          Paths and filenames are hardwired and may also need to be checked.
-          As written, they assume script is being called from a subdirectory.
-          Then: python mapdfn2pflotran.py
-'''
 
 # Access to modules in the same directory.
 # Wihtout making the whole thing a Python package.
-import os
+# import os
 import sys
-script_dir = os.path.dirname(os.path.realpath(__file__))
-sys.path.append(script_dir)
-
 from pathlib import Path
-import numpy as np
-import mapdfn
-from h5py import File
-import yaml
+
 import attrs
+import numpy as np
+import yaml
+from h5py import File
+
+import mapdfn
 
 
-
+# script_dir = os.path.dirname(os.path.realpath(__file__))
+# sys.path.append(script_dir)
 
 
 def field_file(fname):
@@ -47,20 +33,6 @@ def field_file(fname):
 
 
 
-def add_field(grid, f, name, data_array):
-    # 3d uniform grid
-    h5grp = f.create_group(name)
-    # 3D will always be XYZ where as 2D can be XY, XZ, etc. and 1D can be X, Y or Z
-    h5grp.attrs['Dimension'] = np.string_('XYZ')
-    # based on Dimension, specify the uniform grid spacing
-    h5grp.attrs['Discretization'] = grid.step
-    # again, depends on Dimension
-    h5grp.attrs['Origin'] = grid.origin
-    # leave this line out if not cell centered.  If set to False, it will still
-    # be true (issue with HDF5 and Fortran)
-    h5grp.attrs['Cell Centered'] = [True]
-    h5grp.attrs['Interpolation Method'] = np.string_('Step')
-    h5grp.create_dataset('Data', data=data_array)
 
 @attrs.define
 class RockMass:
@@ -87,31 +59,42 @@ class RepositoryBlock:
         self._axis_unit(self.drift_step / np.linalg.norm(self.drift_step))
 
 class DFN:
-    def __init__(self, workdir):
-        self.config(workdir)
-        self.create_dfn(workdir / 'input_dfn')
-        self.repository_mask = self.repository_fields()
-
-    def config(self, workdir: Path):
+    @staticmethod
+    def read_main_yaml(workdir: Path):
         with open(workdir / "main.yaml") as f:
             cfg = yaml.load(f, Loader=yaml.SafeLoader)
+        return cfg
 
+    def __init__(self, workdir: Path):
+        self.workdir = workdir
+        # input directory
+        self.output_fields = {}
+        # dictionary of the filds for the Paraview output
+
+        # Read main input file
+        cfg = self.read_main_yaml(workdir)
         self.grid = mapdfn.Grid.make_grid(**cfg['grid'])
+        # configuration of the strutured grid
         self.rock_mass = RockMass(**cfg['rock'])
+        # Bulk material parameters
         self.dfn_origin = cfg['dfn_origin']
-        self.repository = [RepositoryBlock(**b) for b in cfg['repository']]
+        # Origion of the DFN domain, not used yet
+        repo_cfg = cfg.get('repository', [])
+        # Repository configuration (optional)
+        self.repository = [RepositoryBlock(**b) for b in repo_cfg]
 
-    def create_dfn(self, workdir: Path):
+        self.ellipses = []
+        # List of DFN fractures.
+        self.fractures = []
+        # Fractures with related cells.
+
+
+    def create_dfn(self):
         # Call mapdfn functions
         print('Mapping DFN to grid')
-        self.ellipses = mapdfn.readEllipse(workdir)
+        self.ellipses = mapdfn.readEllipse(self.workdir / "input_dfn")
         self.fractures = mapdfn.map_dfn(self.grid, self.ellipses)
-        print('Calculating effective k')
-        transmissivity, appertre = mapdfn.fr_transmissivity_apperture(workdir)
-        self.porosity = mapdfn.porosity(self.grid, self.fractures, appertre, self.rock_mass.porosity)
-        self.k_iso = mapdfn.permIso(self.grid, self.fractures, transmissivity, self.rock_mass.permeability)
-        # k_aniso = mapdfn.permAniso(fracture, ellipses, transmissivity, self.grid_step, self.k_background)
-        print('Calculating fracture permeability')
+
 
     def mark_line(self, mask, x, vec, length):
         """
@@ -134,7 +117,38 @@ class DFN:
             for i_drift in range(block.n_drifts):
                 drift_origin = block.origin + i_drift * block.drift_step
                 self.mark_line(repo_cells, drift_origin, block.drift_direction, block.drift_lengh)
-        return mapdfn.arange_for_hdf5(self.grid, repo_cells)
+        return repo_cells
+
+    def add_field(self, fname, name, data_array):
+        self.output_fields[name] = data_array
+
+        with field_file(fname) as f:
+            # 3d uniform grid
+            h5grp = f.create_group(name)
+            # 3D will always be XYZ where as 2D can be XY, XZ, etc. and 1D can be X, Y or Z
+            h5grp.attrs['Dimension'] = np.string_('XYZ')
+            # based on Dimension, specify the uniform grid spacing
+            h5grp.attrs['Discretization'] = self.grid.step
+            # again, depends on Dimension
+            h5grp.attrs['Origin'] = self.grid.origin
+            # leave this line out if not cell centered.  If set to False, it will still
+            # be true (issue with HDF5 and Fortran)
+            h5grp.attrs['Cell Centered'] = [True]
+            h5grp.attrs['Interpolation Method'] = np.string_('Step')
+            h5grp.create_dataset('Data', data=data_array)
+
+    def crate_fields(self):
+        transmissivity, appertre = mapdfn.fr_transmissivity_apperture(self.workdir / "input_dfn")
+        porosity = mapdfn.porosity(self.grid, self.fractures, appertre, self.rock_mass.porosity)
+        k_iso = mapdfn.permIso(self.grid, self.fractures, transmissivity, self.rock_mass.permeability)
+        # k_aniso = mapdfn.permAniso(fracture, ellipses, transmissivity, self.grid_step, self.k_background)
+        self.add_field('porosity.h5', 'Porosity', porosity)
+        self.add_field('isotropic_k.h5', 'Permeability', k_iso)
+        self.add_field('tortuosity.h5', 'Tortuosity', self.rock_mass.tortuosity_factor / porosity)
+
+        if len(self.repository) != 0:
+            repository_mask = self.repository_fields()
+            self.add_field('repository.h5', 'Repository', repository_mask)
 
     def main_output(self):
 
@@ -151,44 +165,34 @@ class DFN:
             ff.create_dataset('Coordinates/Z [m]', data=self.xyz[2])
             ff.create_dataset('Coordinates/Y [m]', data=self.xyz[1])
             ff.create_dataset('Coordinates/X [m]', data=self.xyz[0])
-            ff.create_dataset('Time:  0.00000E+00 y/Perm', data=self.k_iso)
+            for name, field in self.output_fields.items():
+                ff.create_dataset(f'Time:  0.00000E+00 y/{name}', data=field)
             #ff.create_dataset('Time:  0.00000E+00 y/Fracture', data=self.fracture_idx)
             #ff.create_dataset('Time:  0.00000E+00 y/PermX', data=kx)
             #ff.create_dataset('Time:  0.00000E+00 y/PermY', data=ky)
             #ff.create_dataset('Time:  0.00000E+00 y/PermZ', data=kz)
-            ff.create_dataset('Time:  0.00000E+00 y/Porosity', data=self.porosity)
-            ff.create_dataset('Time:  0.00000E+00 y/Repo', data=self.repository_mask)
 
-        with field_file('isotropic_k.h5') as f:
-            add_field(self.grid, f, 'Permeability', self.k_iso)
-
-        with field_file('porosity.h5') as f:
-            add_field(self.grid, f, 'Porosity', self.porosity)
-
-        with field_file('tortuosity.h5') as f:
-            add_field(self.grid, f, 'Tortuosity', self.rock_mass.tortuosity_factor / self.porosity)
-
-        with field_file('repository.h5') as f:
-            add_field(self.grid, f, 'Repository', self.repository_mask)
 
         # with field_file('anisotropic_k.h5') as f:
         #     add_field(f, 'PermeabilityX', kx)
         #     add_field(f, 'PermeabilityX', ky)
         #     add_field(f, 'PermeabilityX', kz)
 
-        iarray = np.arange(1, self.grid.cell_dimensions.prod() + 1, dtype=int)
-        marray = np.zeros(self.grid.cell_dimensions.prod(), dtype=int)
-        marray[self.k_iso.flatten() == self.rock_mass.permeability] = 1
-        with field_file('materials.h5') as f:
-            group = f.create_group("Materials")
-            group.create_dataset('Cell Ids', data=iarray)
-            group.create_dataset('Material Ids', data=marray)
+        # iarray = np.arange(1, self.grid.cell_dimensions.prod() + 1, dtype=int)
+        # marray = np.zeros(self.grid.cell_dimensions.prod(), dtype=int)
+        # marray[self.k_iso.flatten() == self.rock_mass.permeability] = 1
+        # with field_file('materials.h5') as f:
+        #     group = f.create_group("Materials")
+        #     group.create_dataset('Cell Ids', data=iarray)
+        #     group.create_dataset('Material Ids', data=marray)
 
 
 
 
 def main(workdir):
     dfn = DFN(workdir)
+    dfn.create_dfn()
+    dfn.crate_fields()
     dfn.main_output()
 
 

@@ -15,16 +15,16 @@ dfn_origin: [-500, -500, -500]
 repository:
     # Consists of several blocks of parallel lines, algorithm marks cells intersected by lines
     # Only axis paralell directions are suppoXrted right now.
-    - origin: [20, 0, 0]
+    - origin: [-500, 25, 0]
       drift_direction: [0, 1, 0]     # X, Y, Z 
       drift_lengh: 500
-      drift_step: [40, 0, 0]
-      n_drifts: 25
+      drift_step: [100, 0, 0]
+      n_drifts: 8
       hole_spacing: 6
       
-    - origin: [-20, 0, 0]
+    - origin: [-500, -25, 0]
       drift_direction: [0, -1, 0]     # X, Y, Z 
       drift_lengh: 500
-      drift_step: [40, 0, 0]
-      n_drifts: 25
+      drift_step: [100, 0, 0]
+      n_drifts: 8
       hole_spacing: 6

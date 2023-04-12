@@ -3,7 +3,7 @@ import shutil
 import subprocess
 from pathlib import Path
 
-import mapdfn2pflotran
+from decodfn import main
 
 script_dir = os.path.dirname(os.path.realpath(__file__))
 
@@ -51,9 +51,9 @@ def dfn_single_case(case):
     """
 
     with workdir(Path(script_dir) / "test_data" / case / "output"):
-        mapdfn2pflotran.main(Path(".."))
+        main.main(Path("..").absolute())
         assert(check_output_dir(Path(".")))
 
 def test_dfn():
-    for case in ["dfn_2", "dfn_5"]:
+    for case in ["dfn_2", "dfn_5", "repo_cube"]:
         dfn_single_case(case)
