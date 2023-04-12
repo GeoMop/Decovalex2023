@@ -68,18 +68,38 @@ class RockMass:
     porosity: float
     tortuosity_factor: float
 
+@attrs.define
+class RepositoryBlock:
+    origin: np.array = attrs.field(converter=mapdfn.float_array)
+    drift_direction: np.array = attrs.field(converter=mapdfn.int_array)
+    drift_lengh: float
+    drift_step: np.array = attrs.field(converter=mapdfn.float_array)
+    n_drifts: int
+    hole_spacing: float
+
+    @staticmethod
+    def _axis_unit(x):
+        assert np.sum(x) in {1, -1}
+        assert np.linalg.norm(x) == 1
+
+    def validate(self):
+        self._axis_unit(self.drift_direction)
+        self._axis_unit(self.drift_step / np.linalg.norm(self.drift_step))
+
 class DFN:
     def __init__(self, workdir):
         self.config(workdir)
         self.create_dfn(workdir / 'input_dfn')
+        self.repository_mask = self.repository_fields()
 
     def config(self, workdir: Path):
         with open(workdir / "main.yaml") as f:
             cfg = yaml.load(f, Loader=yaml.SafeLoader)
 
-        self.grid = mapdfn.Grid(**cfg['grid'])
+        self.grid = mapdfn.Grid.make_grid(**cfg['grid'])
         self.rock_mass = RockMass(**cfg['rock'])
         self.dfn_origin = cfg['dfn_origin']
+        self.repository = [RepositoryBlock(**b) for b in cfg['repository']]
 
     def create_dfn(self, workdir: Path):
         # Call mapdfn functions
@@ -88,17 +108,40 @@ class DFN:
         self.fractures = mapdfn.map_dfn(self.grid, self.ellipses)
         print('Calculating effective k')
         transmissivity, appertre = mapdfn.fr_transmissivity_apperture(workdir)
-        self.porosity = mapdfn.porosity(self.grid, self.fractures, appertre, self.rock_mass.porosity).reshape(self.grid.dimensions)
-        self.k_iso = mapdfn.permIso(self.grid, self.fractures, transmissivity, self.rock_mass.permeability).reshape(self.grid.dimensions)
+        self.porosity = mapdfn.porosity(self.grid, self.fractures, appertre, self.rock_mass.porosity)
+        self.k_iso = mapdfn.permIso(self.grid, self.fractures, transmissivity, self.rock_mass.permeability)
         # k_aniso = mapdfn.permAniso(fracture, ellipses, transmissivity, self.grid_step, self.k_background)
         print('Calculating fracture permeability')
 
+    def mark_line(self, mask, x, vec, length):
+        """
+        Mark cells intersected by line.
+        DEal with lines out of the grid.
+        """
+        ia = self.grid.cell_coord(self.grid.trim(x))
+        ia = np.maximum(np.zeros_like(ia), ia)
+        ib = self.grid.cell_coord(self.grid.trim(x + length * vec))
+        ib = np.minimum(self.grid.cell_dimensions - 1, ib)
+        slices = tuple( [ a if s==0 else np.s_[a:b:s] for a,b,s in zip(ia,ib,vec) ])
+        mask[slices] = 1
+
+    def repository_fields(self):
+
+        repo_cells = np.zeros(self.grid.cell_dimensions, dtype=int)
+
+        for block in self.repository:
+            block.validate()
+            for i_drift in range(block.n_drifts):
+                drift_origin = block.origin + i_drift * block.drift_step
+                self.mark_line(repo_cells, drift_origin, block.drift_direction, block.drift_lengh)
+        return mapdfn.arange_for_hdf5(self.grid, repo_cells)
+
     def main_output(self):
 
-        self.xyz = [o + s * np.arange(0, n + 1) for o, n, s in zip(self.grid.origin, self.grid.dimensions, self.grid.step)]
+        self.xyz = [o + s * np.arange(0, n + 1) for o, n, s in zip(self.grid.origin, self.grid.cell_dimensions, self.grid.step)]
 
         # first fracture index per cell
-        self.fracture_idx = np.full(self.grid.dimensions.prod(), -1, dtype=float)
+        self.fracture_idx = np.full(self.grid.cell_dimensions.prod(), -1, dtype=float)
         for i, fr in enumerate(self.fractures):
             self.fracture_idx[fr.cells] = i
 
@@ -109,11 +152,12 @@ class DFN:
             ff.create_dataset('Coordinates/Y [m]', data=self.xyz[1])
             ff.create_dataset('Coordinates/X [m]', data=self.xyz[0])
             ff.create_dataset('Time:  0.00000E+00 y/Perm', data=self.k_iso)
-            ff.create_dataset('Time:  0.00000E+00 y/Fracture', data=self.fracture_idx)
+            #ff.create_dataset('Time:  0.00000E+00 y/Fracture', data=self.fracture_idx)
             #ff.create_dataset('Time:  0.00000E+00 y/PermX', data=kx)
             #ff.create_dataset('Time:  0.00000E+00 y/PermY', data=ky)
             #ff.create_dataset('Time:  0.00000E+00 y/PermZ', data=kz)
             ff.create_dataset('Time:  0.00000E+00 y/Porosity', data=self.porosity)
+            ff.create_dataset('Time:  0.00000E+00 y/Repo', data=self.repository_mask)
 
         with field_file('isotropic_k.h5') as f:
             add_field(self.grid, f, 'Permeability', self.k_iso)
@@ -124,13 +168,16 @@ class DFN:
         with field_file('tortuosity.h5') as f:
             add_field(self.grid, f, 'Tortuosity', self.rock_mass.tortuosity_factor / self.porosity)
 
+        with field_file('repository.h5') as f:
+            add_field(self.grid, f, 'Repository', self.repository_mask)
+
         # with field_file('anisotropic_k.h5') as f:
         #     add_field(f, 'PermeabilityX', kx)
         #     add_field(f, 'PermeabilityX', ky)
         #     add_field(f, 'PermeabilityX', kz)
 
-        iarray = np.arange(1, self.grid.dimensions.prod() + 1, dtype=int)
-        marray = np.zeros(self.grid.dimensions.prod(), dtype=int)
+        iarray = np.arange(1, self.grid.cell_dimensions.prod() + 1, dtype=int)
+        marray = np.zeros(self.grid.cell_dimensions.prod(), dtype=int)
         marray[self.k_iso.flatten() == self.rock_mass.permeability] = 1
         with field_file('materials.h5') as f:
             group = f.create_group("Materials")

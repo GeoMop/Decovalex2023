@@ -45,10 +45,36 @@ def int_array(x: List[float]) -> np.array:
 
 @attrs.define
 class Grid:
-    origin: np.array = attrs.field(converter=int_array) # 3d point
-    step: np.array   = attrs.field(converter=int_array) # cell dimensions in XYZ
-    dimensions: np.array  = attrs.field(converter=int_array) # int, number of cells in XYZ
+    @classmethod
+    def make_grid(cls, origin, step, dimensions):
+        s = np.array(step)
+        d = np.array(dimensions)
+        cell_dim = (d / s).astype(int)
+        dim = s * cell_dim
+        return cls(np.array(origin), s, d, cell_dim)
 
+    origin: np.array            # 3d point
+    step: np.array              # cell dimensions in XYZ [m]
+    dimensions: np.array        # outer dimensions of the domain [m]
+    cell_dimensions: np.array   # int, number of cells in XYZ
+
+
+    def cell_coord(self, x: np.array) -> np.array:
+        """
+        Cell multiindex containing point 'x'.
+        or None if does not exist.
+        """
+        idx = (x - self.origin) / self.step
+        return idx.astype(int)
+
+    def trim(self, x):
+        """
+        Project point ot of the grid to its surface.
+        """
+        x = np.maximum(x, self.origin + self.step/2)
+        outer_corner = self.origin + self.dimensions - self.step/2
+        x = np.minimum(x, outer_corner)
+        return x
 
 @attrs.define
 class Ellipse:
@@ -109,17 +135,6 @@ def readEllipse(workdir: Path, ):
     print(len(normals))
     print(len(translations))
     ellipses = [Ellipse(np.array(n), np.array(t), np.array(r)) for n, t, r in zip(normals, translations, radii)]
-    # for i in range(len(radii)):
-    #     ellipses.append( {'normal':np.zeros((3),dtype=np.float),'translation':np.zeros((3),dtype=np.float),'xrad':0.0,'yrad':0.0} )
-    #     ellipses[i]['normal'][0] = float(normals[i].split()[0])
-    #     ellipses[i]['normal'][1] = float(normals[i].split()[1])
-    #     ellipses[i]['normal'][2] = float(normals[i].split()[2])
-    #     ellipses[i]['translation'][0] = float(translations[i].split()[0])
-    #     ellipses[i]['translation'][1] = float(translations[i].split()[1])
-    #     ellipses[i]['translation'][2] = float(translations[i].split()[2])
-    #     ellipses[i]['xrad'] = float(radii[i].split()[0])
-    #     ellipses[i]['yrad'] = float(radii[i].split()[1])
-
     return ellipses
 
 def fr_transmissivity_apperture(workdir):
@@ -166,11 +181,12 @@ def fracture_for_ellipse(grid: Grid, ellipse: Ellipse) -> Fracture:
     #find fracture in domain coordinates so can look for nearby cells
     b_box_min = ellipse.translation - np.max(ellipse.radius)
     b_box_max = ellipse.translation + np.max(ellipse.radius)
-    i_box_min = (b_box_min - grid.origin) / grid.step
-    i_box_max = (b_box_max - grid.origin) / grid.step + 1
-    axis_ranges = [range(max(0, a), min(b, n)) for a, b, n in zip(i_box_min.astype(int), i_box_max.astype(int), grid.dimensions)]
 
-    grid_cumul_prod = np.array([1, grid.dimensions[0], grid.dimensions[0] * grid.dimensions[1]])
+    i_box_min = grid.cell_coord(b_box_min)
+    i_box_max = grid.cell_coord(b_box_max) + 1
+    axis_ranges = [range(max(0, a), min(b, n)) for a, b, n in zip(i_box_min, i_box_max, grid.cell_dimensions)]
+
+    grid_cumul_prod = np.array([1, grid.cell_dimensions[0], grid.cell_dimensions[0] * grid.cell_dimensions[1]])
     cells = []
     # X fastest running
     for ijk in itertools.product(*reversed(axis_ranges)):
@@ -202,8 +218,8 @@ def map_dfn(grid, ellipses):
     '''
     return [fracture_for_ellipse(grid, ellipse) for ellipse in ellipses]
 
-def arange_for_hdf5(grid, a):
-    return a.reshape(grid.dimensions).transpose([2,1,0])
+def arange_for_hdf5(grid: Grid, a: np.array) -> np.array:
+    return a.reshape(grid.cell_dimensions).transpose([2, 1, 0])
 
 def porosity(grid: Grid, fractures: List[Fracture], fr_apperture: np.array, bulk_por: float) -> np.array:
     '''Calculate fracture porosity for each cell of ECPM intersected by
@@ -214,7 +230,7 @@ def porosity(grid: Grid, fractures: List[Fracture], fr_apperture: np.array, bulk
 
        fr_apperture: array of appertures of the `fractures`
     '''
-    porosity = np.zeros(grid.dimensions.prod(), dtype=float)
+    porosity = np.zeros(grid.cell_dimensions.prod(), dtype=float)
     for fr, a in zip(fractures, fr_apperture):
         if fr.cells:
             normal_axis = np.argmax(np.abs(fr.ellipse.normal))
@@ -237,7 +253,7 @@ def permIso(grid: Grid, fractures: List[Fracture], fr_transmisivity: np.array, k
      d = length of cell sides
      k_background = float background permeability for cells with no fractures in them
     '''
-    k_iso = np.full(grid.dimensions.prod(), k_background, dtype=float)
+    k_iso = np.full(grid.cell_dimensions.prod(), k_background, dtype=float)
     for fr, a in zip(fractures, fr_transmisivity):
         normal_axis = np.argmax(np.abs(fr.ellipse.normal))
         k_iso[fr.cells] += a / grid.step[normal_axis]

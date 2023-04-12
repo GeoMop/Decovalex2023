@@ -1,7 +1,7 @@
 grid:
     origin: [-500, -500, -500]
     step: [50, 50, 50]
-    dimensions: [20, 20, 20]
+    dimensions: [1000, 1000, 1000]
     
 rock:
     # rock matrix / intact rock properties

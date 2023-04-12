@@ -8,73 +8,29 @@
 *.iml
 
 # auxiliary
-**/*.orig
-**/large_model*
-tests/**/sandbox/**
-experiments/mlmc-modelling-2019/TRASH
-experiments/mlmc-modelling-2019/2019_plots
-tests/run_macro_transport
-tests/fine_flow
-tests/sample_*
-failed_runs
-results
-sandbox
+problems/**
 
 # environments
 .tox
 venv
 
 # temporary excluded
-**/*.zip
-experiments/edz_transport/TSX_prediction
-experiments/edz_transport/samples
-experiments/mlmc-modelling-2019/output_2
-experiments/mlmc-modelling-2019/*.pdf
-experiments/mlmc-modelling-2019/workdir/**
-experiments/repository-model/new_from_bgem/**
-experiments/repository-model/prd/**
-experiments/repository-model/tmp/**
 
 # venv
 **/venv/**
 **/env/**
 
-# Latex
-**/*.aux
-**/*.log
-**/*.bbl
-**/*.blg
-**/*.out
-**/SIEVERT*
-**/.~lock*
 
 # python cache, and packages
 **/__pycache__/*
 **/.pytest_cache
 **/*.egg-info/**
+build/**
 
 # kate swap
 *.kate-swp
 
-tests/test_data/*_fields
-tests/test_data/*_fields.*
-tests/test_data/*_balance.*
-tests/test_data/trans_*
-#
-*/output_1/*
+# test outputs
+tests/test_data/*/output
 
-mlmc_random_frac/fr*
-mlmc_random_frac/_save/*
-mlmc_random_frac/pe_fr*
-mlmc_random_frac/tst_cfg
-fixed-3-frac/output_th
 
-repository-model/env/*
-repository-model/tmp/*
-
-metodika_vypoctu_indikatoru/*.aux
-metodika_vypoctu_indikatoru/*.bbl
-metodika_vypoctu_indikatoru/*.blg
-metodika_vypoctu_indikatoru/*.log
-metodika_vypoctu_indikatoru/*.out
-metodika_vypoctu_indikatoru/main.pdf

@@ -1,0 +1,33 @@
+[build-system]
+requires = ["setuptools", "setuptools-scm"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "decodfn"
+authors = [
+    {name = "Jan Březina", email = "jan.brezina@tul.cz"},
+]
+description = "Simple DFN and repository upsacalint to structured PFlotran grid."
+readme = "README.md"
+requires-python = ">=3.7"
+keywords = ["upscaling", "discrete fracture network", "Pflotran"]
+license = {text = "GNU-3"}
+dependencies = [
+    "attrs",
+    "numpy",
+    "h5py",
+]
+dynamic = ["version"]
+
+[tool.setuptools]
+packages = ["decodfn"]
+
+#[project.optional-dependencies]
+#pdf = ["ReportLab>=1.2", "RXP"]
+#rest = ["docutils>=0.3", "pack ==1.1, ==1.3"]
+
+[project.scripts]
+decodfn = "decodfn.main:main"
+
+# ... other project metadata fields as specified in:
+#     https://packaging.python.org/en/latest/specifications/declaring-project-metadata/

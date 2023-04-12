@@ -1,7 +1,7 @@
 grid:
     origin: [-500, -500, -500]
-    step: [50, 50, 50]
-    dimensions: [1000, 1000, 1000]
+    step: [50, 40, 50]              
+    dimensions: [1000, 1000, 1000]  # 20 * 50, 25 * 40, 20 * 50
     
 rock:
     # rock matrix / intact rock properties
@@ -15,16 +15,16 @@ dfn_origin: [-500, -500, -500]
 repository:
     # Consists of several blocks of parallel lines, algorithm marks cells intersected by lines
     # Only axis paralell directions are suppoXrted right now.
-    - origin: [540, 1020, 450]
+    - origin: [20, 0, 0]
       drift_direction: [0, 1, 0]     # X, Y, Z 
-      drift_lengh: 300
+      drift_lengh: 500
       drift_step: [40, 0, 0]
       n_drifts: 25
       hole_spacing: 6
       
-    - origin: [540, 980, 450]
+    - origin: [-20, 0, 0]
       drift_direction: [0, -1, 0]     # X, Y, Z 
-      drift_lengh: 300
+      drift_lengh: 500
       drift_step: [40, 0, 0]
       n_drifts: 25
       hole_spacing: 6
