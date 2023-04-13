@@ -6,6 +6,7 @@ import sys
 from pathlib import Path
 
 import attrs
+import matplotlib.pyplot as plt
 import numpy as np
 import yaml
 from h5py import File
@@ -26,7 +27,7 @@ def field_file(fname):
         add_field(...)
     this way file is closed automatically.
     """
-    print(f"Creating {fname} data file.")
+    #print(f"Creating {fname} data file.")
     return File(fname, 'w')
 
 
@@ -58,6 +59,31 @@ class RepositoryBlock:
         self._axis_unit(self.drift_direction)
         self._axis_unit(self.drift_step / np.linalg.norm(self.drift_step))
 
+@attrs.define
+class SurfaceBC:
+    x0: float
+    x1: float
+    z0: float
+    z1: float
+    pressure_at_1000: float
+    gravity_acceleration: float = 9.89
+    water_density: float = 1000
+
+    def surface_field(self, grid: mapdfn.Grid):
+        """
+        sin(x) transition from ZO to Z1 on the interval (X0, X1)
+        """
+        elevation = np.empty(grid.cell_dimensions[0:2], dtype=float)
+        ix0 = grid.cell_coord([self.x0, 0,0])[0]
+        ix1 = grid.cell_coord([self.x1, 0, 0])[0]
+        elevation[0:ix0, :] = self.z0
+        transition = 0.5 - 0.5 * np.sin(np.linspace(np.pi/2, np.pi*3/2, ix1 - ix0))
+        # transition from 0 to 1 on the range ix0:ix1
+        elevation[ix0:ix1, :] = transition[:, None] * (self.z1 - self.z0) + self.z0
+        elevation[ix1:, :] = self.z1
+        return self.pressure_at_1000 + (elevation - 1000) * self.water_density * self.gravity_acceleration
+
+
 class DFN:
     @staticmethod
     def read_main_yaml(workdir: Path):
@@ -80,8 +106,10 @@ class DFN:
         self.dfn_origin = cfg['dfn_origin']
         # Origion of the DFN domain, not used yet
         repo_cfg = cfg.get('repository', [])
-        # Repository configuration (optional)
         self.repository = [RepositoryBlock(**b) for b in repo_cfg]
+        # Repository configuration (optional)
+        bc_cfg = cfg.get("surface_bc", None)
+        self.surface_bc = SurfaceBC(**bc_cfg) if bc_cfg is not None else None
 
         self.ellipses = []
         # List of DFN fractures.
@@ -118,22 +146,29 @@ class DFN:
                 drift_origin = block.origin + i_drift * block.drift_step
                 self.mark_line(repo_cells, drift_origin, block.drift_direction, block.drift_lengh)
         return repo_cells
+    def surface_plot(self, field_xy):
+        fig, ax = plt.subplots()
+        im = ax.imshow(field_xy, cmap='viridis', interpolation='nearest')
+        cbar = ax.figure.colorbar(im, ax=ax)
+        cbar.ax.set_ylabel('Color bar', rotation=-90, va="bottom")
+        fig.savefig('pressure_top.pdf')
 
-    def add_field(self, fname, name, data_array):
+    def add_field(self, fname, name, data_array, axes=(0,1,2)):
         self.output_fields[name] = data_array
 
         with field_file(fname) as f:
             # 3d uniform grid
             h5grp = f.create_group(name)
             # 3D will always be XYZ where as 2D can be XY, XZ, etc. and 1D can be X, Y or Z
-            h5grp.attrs['Dimension'] = np.string_('XYZ')
+            h5grp.attrs['Dimension'] = np.string_(''.join(['XYZ'[ax] for ax in axes]))
             # based on Dimension, specify the uniform grid spacing
-            h5grp.attrs['Discretization'] = self.grid.step
+            h5grp.attrs['Discretization'] = [self.grid.step[ax] for ax in axes]
             # again, depends on Dimension
-            h5grp.attrs['Origin'] = self.grid.origin
+            h5grp.attrs['Origin'] = [self.grid.origin[ax] for ax in axes]
             # leave this line out if not cell centered.  If set to False, it will still
             # be true (issue with HDF5 and Fortran)
             h5grp.attrs['Cell Centered'] = [True]
+            h5grp.attrs['Transient'] = False
             h5grp.attrs['Interpolation Method'] = np.string_('Step')
             h5grp.create_dataset('Data', data=data_array)
 
@@ -149,6 +184,11 @@ class DFN:
         if len(self.repository) != 0:
             repository_mask = self.repository_fields()
             self.add_field('repository.h5', 'Repository', repository_mask)
+
+        if self.surface_bc:
+            bc_top_pressure = self.surface_bc.surface_field(self.grid)
+            self.surface_plot(bc_top_pressure)
+            self.add_field('pressure_top.h5', 'bc_top_presuure', bc_top_pressure, axes=(0,1))
 
     def main_output(self):
 

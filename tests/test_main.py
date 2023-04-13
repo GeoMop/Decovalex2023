@@ -3,6 +3,8 @@ import shutil
 import subprocess
 from pathlib import Path
 
+import pytest
+
 from decodfn import main
 
 script_dir = os.path.dirname(os.path.realpath(__file__))
@@ -44,16 +46,11 @@ def check_output_dir(dir: Path):
     return all
 
 
-def dfn_single_case(case):
-    """
-    TODO:
-    - comparison using HDF5
-    """
-
+@pytest.mark.parametrize(
+    "case",
+    ["dfn_2", "dfn_5", "repo_cube", "surface_cube"]
+)
+def test_dfn(case):
     with workdir(Path(script_dir) / "test_data" / case / "output"):
         main.main(Path("..").absolute())
         assert(check_output_dir(Path(".")))
-
-def test_dfn():
-    for case in ["dfn_2", "dfn_5", "repo_cube"]:
-        dfn_single_case(case)

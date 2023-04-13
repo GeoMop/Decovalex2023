@@ -1,0 +1,20 @@
+grid:
+    origin: [-500, -500, -500]
+    step: [50, 40, 50]              
+    dimensions: [1000, 1000, 1000]  # 20 * 50, 25 * 40, 20 * 50
+    
+rock:
+    # rock matrix / intact rock properties
+    permeability: 1.e-24
+    porosity: 0.0005
+    tortuosity_factor: 0.001
+    
+dfn_origin: [-500, -500, -500] 
+
+surface_bc:
+    x0: -200
+    x1: 300
+    z0: 1000    # elevation in x0
+    z1: 1020    # elevation in x1
+    # sin(x) transition between elevations is used on interval (x0, x1)
+    pressure_at_1000: 101325  # ?[Pa], would be better in [m] ?
