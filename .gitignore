@@ -9,6 +9,7 @@
 
 # auxiliary
 problems/**
+pflotran/**/out/*
 
 # environments
 .tox
