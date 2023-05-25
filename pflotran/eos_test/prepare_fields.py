@@ -211,6 +211,8 @@ from h5py import File
         ##     group.create_dataset('Cell Ids', data=iarray)
         ##     group.create_dataset('Material Ids', data=marray)
 
+def arange_for_hdf5(dimensions, a: np.array) -> np.array:
+    return a.reshape(dimensions).transpose([2, 1, 0])
 
 def add_field(f, name, dimensions, data_array):
     # 3d uniform grid
@@ -244,9 +246,9 @@ def main():
     xyz = [o + steps_to_nodes(steps) for o, steps in zip(origin, axes_steps)]
     
     
-    init_volume_fraction = np.zeros(dimensions) + np.linspace(0.1, 0.5, dimensions[0])[:, None, None] 
-    difusion_rate = np.zeros(dimensions) + np.linspace(2, 5, dimensions[1])[None, :, None]
-    permeability = np.zeros(dimensions) + np.linspace(1.e-20, 1.e-20, dimensions[2])[None, None, :]
+    init_volume_fraction = arange_for_hdf5(dimensions, np.zeros(dimensions) + np.linspace(0.1, 0.5, dimensions[0])[:, None, None])
+    difusion_rate = arange_for_hdf5(dimensions, np.zeros(dimensions) + np.linspace(2, 5, dimensions[1])[None, :, None])
+    permeability = arange_for_hdf5(dimensions, np.zeros(dimensions) + np.linspace(1.e-20, 1.e-20, dimensions[2])[None, None, :])
     
     with File('input_fields.h5', 'w') as ff:
         ff.create_dataset('Cell Ids', data=np.arange(1, np.prod(dimensions)+1, dtype=int))
