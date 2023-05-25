@@ -77,15 +77,16 @@ END
 #  HDF5_DATASET_NAME U
 #  FILENAME parameters-543.h5
 #END
+ 
 
 DATASET initial_Calcite_vol_frac
-  HDF5_DATASET_NAME Calcite_vol_frac
-  FILENAME parameters-543.h5
+  HDF5_DATASET_NAME SiO4(am)_volume_fraction
+  FILENAME input_fields.h5
 END
 
 DATASET initial_Calcite_area
-  HDF5_DATASET_NAME Calcite_area
-  FILENAME parameters-543.h5
+  HDF5_DATASET_NAME SiO4(am)_specific_area
+  FILENAME input_fields.h5
 END
 
 #DATASET Porosity
@@ -93,7 +94,7 @@ END
 #END
 
 DATASET Permeability
-  FILENAME parameters-543.h5
+  FILENAME input_fields.h5
 END
 
 #=========================== material properties ==============================
@@ -292,8 +293,13 @@ END
 
 
 #=========================== stratigraphy couplers ============================
+#STRATA
+#  FILE ./543.h5
+#END
+
 STRATA
-  FILE ./543.h5
+  REGION all
+  MATERIAL soil1
 END
 
 END_SUBSURFACE

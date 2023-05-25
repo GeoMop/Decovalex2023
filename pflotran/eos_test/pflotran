@@ -3,6 +3,7 @@ prefix=$1
 shift
 # No obvious way how to separate output from input, output is generated at the same directory as the input file.
 # So we rather copy the input files to the output to keep them separated.
+rm -rf out
 mkdir -p out
 cp * out
 docker run -it -v `pwd`:/home/WORK -w /home/WORK/out flow123d/pflotran-gnu-rel /workspace/pflotran//src/pflotran/pflotran -input_prefix ${prefix} $@ 
