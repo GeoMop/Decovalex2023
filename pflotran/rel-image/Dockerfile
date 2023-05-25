@@ -1,15 +1,15 @@
-ARG source_image
-ARG base_image
 FROM flow123d/flow-dev-gnu-rel:4.0.3 as build_cont
+
+ARG source_repository
+ARG commit
 
 ENV PETSC_DIR=/usr/local/petsc_v3.18.6/
 WORKDIR ${HOME}/workspace/
-RUN git clone https://bitbucket.org/pflotran/pflotran
+RUN git clone ${source_repository}
 # Last merge before update ro PETSC 3.19
 WORKDIR ${HOME}/workspace/pflotran
-RUN git checkout 083857c
+RUN git checkout ${commit}
 WORKDIR ${HOME}/workspace/pflotran/src/pflotran
-COPY reaction_sandbox_*.F90 pflotran_*.txt .
 RUN make  pflotran
 ENTRYPOINT ["/workspace/pflotran/src/pflotran/pflotran"]
 
