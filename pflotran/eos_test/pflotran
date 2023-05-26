@@ -6,6 +6,10 @@ shift
 rm -rf out
 mkdir -p out
 cp * out
-docker run -it -v `pwd`:/home/WORK -w /home/WORK/out flow123d/pflotran-gnu-rel /workspace/pflotran//src/pflotran/pflotran -input_prefix ${prefix} $@ 
+
+pflotran_cmd=../pflotran_JB/src/pflotran/pflotran
+#pflotran_cmd=docker run -it -v `pwd`:/home/WORK -w /home/WORK/out flow123d/pflotran-gnu-rel 
+
+$pflotran_cmd -input_prefix ${prefix} $@ 
 # Redirection of STDOUT seems not necessary as the *.out file contains the same with more detailed information about initial and boundary conditions.
 # | tee out/stdout

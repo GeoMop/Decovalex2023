@@ -33,15 +33,26 @@ CHEMISTRY
   Tracer
   Tracer2
   /
-  MINERALS
-  SiO2(am)
+  IMMOBILE_SPECIES
+    SiO2_im
   /
-  MINERAL_KINETICS
-    SiO2(am)
-      RATE_CONSTANT 1.e-10 mol/cm^2-sec
-      SURFACE_AREA_VOL_FRAC_POWER 0
+  #MINERALS
+  #SiO2(am)
+  #/
+  #MINERAL_KINETICS
+  #  SiO2(am)
+  #    RATE_CONSTANT 1.e-10 mol/cm^2-sec
+  #    SURFACE_AREA_VOL_FRAC_POWER 0
+  #  /
+  #/
+  REACTION_SANDBOX
+    EOS
+      SPECIES_NAME SiO2(aq)
+      MINERAL_NAME SiO2_im
+      RATE_CONSTANT 1.d-5 1/h 
     /
   /
+
   DATABASE ./hanford.dat
   LOG_FORMULATION
   ACTIVITY_COEFFICIENTS NEWTON_ITERATION
@@ -79,13 +90,13 @@ END
 #END
  
 
-DATASET initial_Calcite_vol_frac
-  HDF5_DATASET_NAME SiO4(am)_volume_fraction
+DATASET initial_SiO2_im
+  HDF5_DATASET_NAME SiO2(am)_volume_fraction
   FILENAME input_fields.h5
 END
 
 DATASET initial_Calcite_area
-  HDF5_DATASET_NAME SiO4(am)_specific_area
+  HDF5_DATASET_NAME SiO2(am)_specific_area
   FILENAME input_fields.h5
 END
 
@@ -255,10 +266,14 @@ CONSTRAINT initial_groundwater
     Tracer   1.e-7            T
     Tracer2  1.e-7            T
   /
-  MINERALS
-    SiO2(am)       DATASET initial_Calcite_vol_frac 0.1 cm^2/g  # DATASET initial_Calcite_area
+  # [mol/m^3 bulk]
+  IMMOBILE     
+    SiO2_im  DATASET initial_SiO2_im
+  /  
+#  MINERALS
+#    SiO2(am)         # DATASET initial_Calcite_area
 #   Metatorbernite 0.    1. cm^2/cm^3
-  /
+#  /
 END
 
 CONSTRAINT groundwater

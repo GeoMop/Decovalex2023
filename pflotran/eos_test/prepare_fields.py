@@ -256,8 +256,8 @@ def main():
         ff.create_dataset('Coordinates/Y [m]', data=xyz[1])
         ff.create_dataset('Coordinates/Z [m]', data=xyz[2])        
         ff.create_dataset('Permeability', data=permeability.flatten())
-        ff.create_dataset("SiO4(am)_volume_fraction", data=init_volume_fraction.flatten())
-        ff.create_dataset("SiO4(am)_specific_surface", data=difusion_rate.flatten())
+        ff.create_dataset("SiO2(am)_volume_fraction", data=init_volume_fraction.flatten())
+        ff.create_dataset("SiO2(am)_specific_surface", data=difusion_rate.flatten())
         
 
 if __name__ == "__main__":

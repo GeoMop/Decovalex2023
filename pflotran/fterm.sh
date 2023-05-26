@@ -14,4 +14,14 @@ IMG_WORKDIR="/home/${uname}/workdir"
 
 envargs="-euid=$uid -egid=$gid -ewho=$uname -ehome=${IMG_WORKDIR} -ePETSC_DIR=/usr/local/petsc_v3.18.6/"
 mountargs="-w ${IMG_WORKDIR} -v ${ABS_SCRIPT_DIR}:${IMG_WORKDIR}"
-docker run --rm -it $envargs $mountargs flow123d/flow-dev-gnu-rel:4.0.3
+interactive="--rm -it"
+docker_call=docker run $interactive  $envargs $mountargs flow123d/flow-dev-gnu-rel:4.0.3 $cmd
+
+if [ -n "$1" ]
+then        
+    # command
+    $docker_call $@
+else
+    # shell
+    $docker_call
+fi
