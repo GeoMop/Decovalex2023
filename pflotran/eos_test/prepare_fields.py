@@ -9,8 +9,8 @@
 import sys
 from pathlib import Path
 
-import attrs
-import matplotlib.pyplot as plt
+
+#import matplotlib.pyplot as plt
 import numpy as np
 import yaml
 from h5py import File
@@ -246,9 +246,12 @@ def main():
     xyz = [o + steps_to_nodes(steps) for o, steps in zip(origin, axes_steps)]
     
     
-    init_volume_fraction = arange_for_hdf5(dimensions, np.zeros(dimensions) + np.linspace(0.1, 0.5, dimensions[0])[:, None, None])
-    difusion_rate = arange_for_hdf5(dimensions, np.zeros(dimensions) + np.linspace(2, 5, dimensions[1])[None, :, None])
-    permeability = arange_for_hdf5(dimensions, np.zeros(dimensions) + np.linspace(1.e-20, 1.e-20, dimensions[2])[None, None, :])
+    # init eos concentration - change in X direction
+    init_eos = arange_for_hdf5(dimensions, np.zeros(dimensions) + np.linspace(0.1, 0.5, dimensions[0])[:, None, None])
+    # EOS diffusion rate -  change in Y direction
+    difusion_rate = arange_for_hdf5(dimensions, np.zeros(dimensions) + np.geomspace(1e-8, 1e-5, dimensions[1])[None, :, None])
+    # permeability -  change in Z direction, flow prescribed along X direction
+    permeability = arange_for_hdf5(dimensions, np.zeros(dimensions) + np.geomspace(1e-25, 1e-19, dimensions[2])[None, None, :])
     
     with File('input_fields.h5', 'w') as ff:
         ff.create_dataset('Cell Ids', data=np.arange(1, np.prod(dimensions)+1, dtype=int))
@@ -256,7 +259,7 @@ def main():
         ff.create_dataset('Coordinates/Y [m]', data=xyz[1])
         ff.create_dataset('Coordinates/Z [m]', data=xyz[2])        
         ff.create_dataset('Permeability', data=permeability.flatten())
-        ff.create_dataset(" ", data=init_volume_fraction.flatten())
+        ff.create_dataset(" ", data=init_eos.flatten())
         ff.create_dataset("diffusion_rate", data=difusion_rate.flatten())
         
 
