@@ -44,30 +44,10 @@ CHEMISTRY
   /
   REACTION_SANDBOX
     EOS
-      MOBILE_NAME SiO2(aq)
-      IMMOBILE_NAME SiO2_im
+      MOBILE_NAME SiO2(aq)   # dissolved species  
+      IMMOBILE_NAME SiO2_im  # immobile species
       SCALING_MINERAL A(s)   # volume fraction of given mineral is used to scale given DIFFUSION_RATE
-      DIFFUSION_RATE 1.d-7 #1/s
-      
-      #RATE_IMMOBILE 1.d-7 #1/s
-      
-      # CASE
-      # mobile conc mol/l
-      # immobile mol / m3
-      # Residual(idof_mobile) = Residual(idof_mobile) - this%rate_constant * L_water ! * rt_auxvar%total(this%species_id,iphase)
-      # Residual(idof_immobile) = Residual(idof_immobile) + this%rate_constant
-      # [0.09999942034482956, 0.0999998077750206]
-      # delta imb range: -5.8e-7, -1.9e-7
-      # delta mob range: [ 0.0008642076281830668, 0.0008642161847092211]
-      #RATE_CONSTANT 1.d-9 #1/s
-      
-      
-      # CASE 
-      # immobile -=rate, mobile +=rate
-      # RATE_CONSTANT 1.d-12 #1/s
-      # immobile decrease: -2.16e-4 / L_water
-      # mobile increase: 8.642e-7
-      # poměr mobile/immobile = 4e-3 = 1 / (porosity * 1000) 
+      DIFFUSION_RATE 1.d-7   # [s^-1]
     /
   /
   MINERALS
@@ -118,16 +98,17 @@ END
 
 
 DATASET initial_SiO2_im
-  HDF5_DATASET_NAME SiO2(am)_volume_fraction
+  HDF5_DATASET_NAME InitImmobile
   FILENAME input_fields.h5
 END
 
-DATASET initial_Calcite_area
-  HDF5_DATASET_NAME SiO2(am)_specific_area
+DATASET eos_diff_rate
+  HDF5_DATASET_NAME DiffusionRate
   FILENAME input_fields.h5
 END
 
 DATASET Permeability
+  HDF5_DATASET_NAME Permeability
   FILENAME input_fields.h5
 END
 
@@ -144,37 +125,6 @@ MATERIAL_PROPERTY soil1
   /
 END
 
-# MATERIAL_PROPERTY soil2
-#   ID 2
-#   POROSITY 0.25d0
-#   TORTUOSITY 1.d0
-#   CHARACTERISTIC_CURVES sf1
-#   PERMEABILITY
-#     DATASET Permeability
-#   /
-# END
-# 
-# MATERIAL_PROPERTY soil3
-#   ID 3
-#   POROSITY 0.25d0 #DATASET Porosity
-#   TORTUOSITY 1.d0
-#   CHARACTERISTIC_CURVES sf1
-#   PERMEABILITY
-#     DATASET Permeability
-#   /
-# END
-# 
-# MATERIAL_PROPERTY soil4
-#   ID 4
-#   POROSITY 0.25d0
-#   TORTUOSITY 1.d0
-#   CHARACTERISTIC_CURVES sf1
-#   PERMEABILITY
-#     PERM_X 1.d-9
-#     PERM_Y 1.d-9
-#     PERM_Z 1.d-10
-#   /
-# END
 
 #=========================== characteristic curves ============================
 CHARACTERISTIC_CURVES sf1
@@ -287,19 +237,14 @@ CONSTRAINT initial_groundwater
   CONCENTRATIONS
     A(aq)    1.d-40           T
     SiO2(aq) 1.d-30           T
-#    Tracer   1.e-7            T
-#    Tracer2  1.e-7            T
   /
   # [mol/m^3 bulk]
   IMMOBILE     
-    SiO2_im  0.1 #DATASET initial_SiO2_im
+    #SiO2_im  0.1 
+    SiO2_im DATASET initial_SiO2_im
   /  
-#  MINERALS
-#    SiO2(am)         # DATASET initial_Calcite_area
-#   Metatorbernite 0.    1. cm^2/cm^3
-#  /
   MINERALS
-    A(s) 1.d0 1.d0
+    A(s) DATASET eos_diff_rate 1.d0 # volume fraction used as the diffucion rate; sorption arrea set to 1.d0 in orcer to aviod numerical errors.
   /
 END
 
@@ -307,8 +252,6 @@ CONSTRAINT groundwater
   CONCENTRATIONS
     A(aq)    1.d-40           T
     SiO2(aq) 1.d-30           T
-#    Tracer   1.e-7            T
-#    Tracer2  1.e-7            T
   /
 END
 

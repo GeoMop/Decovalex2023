@@ -259,8 +259,8 @@ def main():
         ff.create_dataset('Coordinates/Y [m]', data=xyz[1])
         ff.create_dataset('Coordinates/Z [m]', data=xyz[2])        
         ff.create_dataset('Permeability', data=permeability.flatten())
-        ff.create_dataset(" ", data=init_eos.flatten())
-        ff.create_dataset("diffusion_rate", data=difusion_rate.flatten())
+        ff.create_dataset("InitImmobile", data=init_eos.flatten())
+        ff.create_dataset("DiffusionRate", data=difusion_rate.flatten())
         
 
 if __name__ == "__main__":
