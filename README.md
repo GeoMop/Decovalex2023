@@ -7,34 +7,72 @@ Based on original SANDIA scripts (see below).
 
 
 ## Instalation
-Installation to user space (no root / administrator rights required). 
-
-From local sources in a `decovalex` directory:
-
-    ```
-    python3 -m pip install ./decovalex
-    ```
-You can clone the git repository (get sources) by:
+First download the [project package](https://github.com/GeoMop) to the `decovalex` directory. 
+For development you may prefer to git clone the repository:
     
     ```
     git clone https://github.com/GeoMop/Decovalex2023.git
     ```
 
-Directly from the github repository:
+For installation to user space (no root / administrator rights required) change to the `decovalex` directory
+and execute:
+
+    ```
+    python3 -m pip install ./decovalex
+    ```
+
+Posisbly the direct installation from Github may work as well:
     ```
     python3 -m pip install "decovalex @ git+https://github.com/GeoMop/Decovalex2023
     ``` 
     
+# Usage
+```
+    decodfn <workdir>
+```
+
+`workdir` is the direcotry with the `main.yaml` configuration file and possible subdirectory `dfn_input` with fracture properties.
+The output files are placed in current system directory.
 
 
 ## Repository structure
 - `decodfn` 
     - `main.py` : the main script, the `main()` called by the command `decodfn`
+- `pflotran` : Docker file and test for building a pflotran with EOS diffusion reaction sandbox model
+    - `pflotran_JB` : submodule with pflotran fork 
+    - `eos_test` : the test input for the EOS diffusion model
+    - `build-image` : Dockerfile for building the pflotran image (use flow123D build images with compatible PETSC version)
+    - `makefile` : targets for development and release builds 
+    - `fterm.sh` : simple script for starting development Docker container
 - `tests` : test calculations 
     - `dfn_253` : test sample of 253 fractures
     - `repo_multiscale` : basic multiscale repository model
     
-   
+
+## EOS diffusion model
+The modified Pflotran sources are in the [forked repository](https://github.com/flow123d/pflotran.git).
+To build the release image use:
+```
+    cd ./pflotran && make rel_image
+    docker push flow123d/pflotran-gnu-rel
+```
+
+### How to use the EOS model
+We describe steps to execute the EOS test:
+
+1. [Install Docker](https://docs.docker.com/engine/install/)
+2. Install Git (versioning system)
+    - Linux, Ubuntu: e.g. `sudo apt install git`
+    - Windows: use [Git for Windows](https://gitforwindows.org/) which also provides the Git BASH terminal
+3. Running the test. In terminal (native on Linux, Git Bash on Windows):
+     
+     ```
+        cd ./pflotran/eos_test                      # entry the test directory
+        docker pull flow123d/pflotran-gnu-rel       # retrive the pflotran image with EOS diffusion model
+        docker 
+
+This repository contains is as a submodule `pflotran
+    
 1) skript na promítnutí DFN do heterogenní propustnosti v pravidelné mřížce (porous medium - CPM)
 mapDFN-krychlicka.zip
 Zde je to v přehlednější verzi se závislostmi a s celými vstupními a výstupními daty, je to na jednodušší geometrii krychličky s puklinami, hrubá diskretizace s malou velikostí souborů (není to ale přímo ke spuštění protože to není ve správných cestách). Hlavní skript je mapdfn2pflotran.py, který obsahuje přímo v kódu veškeré vstupy na prvních 10-20 řádcích.

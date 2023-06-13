@@ -2,7 +2,14 @@
 # Access to modules in the same directory.
 # Wihtout making the whole thing a Python package.
 # import os
+
+import logging
 import sys
+
+logging.basicConfig(level=logging.INFO) #, filename='endorse_mlmc.log')
+#logging.getLogger().addHandler(logging.StreamHandler(sys.stdout))
+
+
 from pathlib import Path
 
 import attrs
@@ -11,7 +18,7 @@ import numpy as np
 import yaml
 from h5py import File
 
-import mapdfn
+from . import mapdfn
 
 
 # script_dir = os.path.dirname(os.path.realpath(__file__))
@@ -119,8 +126,9 @@ class DFN:
 
     def create_dfn(self):
         # Call mapdfn functions
-        print('Mapping DFN to grid')
+        logging.log(logging.INFO, 'Mapping DFN to grid...')
         self.ellipses = mapdfn.readEllipse(self.workdir / "input_dfn")
+        logging.log(logging.INFO, f'loaded {len(self.ellipses)} fracture ellipses')
         self.fractures = mapdfn.map_dfn(self.grid, self.ellipses)
 
 
@@ -227,19 +235,22 @@ class DFN:
         #     group.create_dataset('Material Ids', data=marray)
 
 
-
-
-def main(workdir):
+def process_dir(workdir):
     dfn = DFN(workdir)
     dfn.create_dfn()
     dfn.crate_fields()
     dfn.main_output()
 
-
-if __name__ == "__main__":
+def main():
     # get working directory
     if len(sys.argv) > 1:
         workdir = Path(sys.argv[1])
     else:
-        workdir = Path.cwd()
-    main(workdir)
+        workdir = workdir = Path.cwd()
+    process_dir(workdir)
+
+
+
+
+if __name__ == "__main__":
+    main()

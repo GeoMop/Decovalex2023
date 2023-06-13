@@ -1,5 +1,6 @@
 import csv
 import itertools
+import logging
 import time
 from pathlib import Path
 from typing import *
@@ -7,7 +8,7 @@ from typing import *
 import attrs
 import numpy as np
 
-import transformations as tr
+from . import transformations as tr
 
 
 def float_array(x: List[float]) -> np.array:
@@ -104,9 +105,6 @@ def readEllipse(workdir: Path, ):
     # for line in temp:
     #   if line.split()[-1] != 'R':
     #     translations.append(line)
-    print(len(radii))
-    print(len(normals))
-    print(len(translations))
     ellipses = [Ellipse(np.array(n), np.array(t), np.array(r)) for n, t, r in zip(normals, translations, radii)]
     return ellipses
 
@@ -144,7 +142,7 @@ def intersect_cell(loc_corners: np.array, ellipse: Ellipse) -> bool:
 
     return True
 
-def fracture_for_ellipse(grid: Grid, ellipse: Ellipse) -> Fracture:
+def fracture_for_ellipse(grid: Grid, i_ellipse: int, ellipse: Ellipse) -> Fracture:
     # calculate rotation matrix for use later in rotating coordinates of nearby cells
     direction = np.cross([0,0,1], ellipse.normal)
     #cosa = np.dot([0,0,1],normal)/(np.linalg.norm([0,0,1])*np.linalg.norm(normal)) #frobenius norm = length
@@ -168,8 +166,11 @@ def fracture_for_ellipse(grid: Grid, ellipse: Ellipse) -> Fracture:
         corners = grid.origin[None, :] + (ijk[None, :] + __rel_corner[:, :]) * grid.step[None, :]
         loc_corners = mat_to_local @ (corners - ellipse.translation).T
         if intersect_cell(loc_corners, ellipse):
+            logging.log(logging.DEBUG, f"       cell {ijk}")
             cell_index = ijk @ grid_cumul_prod
             cells.append(cell_index)
+    if len(cells) > 0:
+        logging.log(logging.INFO, f"   #{i_ellipse} fr, {len(cells)} cell intersections")
     return Fracture(ellipse, cells)
 
 def map_dfn(grid, ellipses):
@@ -189,10 +190,10 @@ def map_dfn(grid, ellipses):
 
      JB TODO: allow smaller ECPM domain
     '''
-    return [fracture_for_ellipse(grid, ellipse) for ellipse in ellipses]
+    return [fracture_for_ellipse(grid, ie, ellipse) for ie, ellipse in enumerate(ellipses)]
 
 def arange_for_hdf5(grid: Grid, a: np.array) -> np.array:
-    return a.reshape(grid.cell_dimensions).transpose([2, 1, 0])
+    return a.reshape(grid.cell_dimensions[::-1]).transpose([2,1,0])
 
 def porosity(grid: Grid, fractures: List[Fracture], fr_apperture: np.array, bulk_por: float) -> np.array:
     '''Calculate fracture porosity for each cell of ECPM intersected by
