@@ -7,7 +7,7 @@ Based on original SANDIA scripts (see below).
 
 
 ## Instalation
-First download the [project package](https://github.com/GeoMop) to the `decovalex` directory. 
+First download the [project package](https://github.com/GeoMop/Decovalex2023/archive/refs/heads/master.zip) to the `decovalex` directory. 
 For development you may prefer to git clone the repository:
     
     ```
@@ -34,6 +34,21 @@ Posisbly the direct installation from Github may work as well:
 `workdir` is the direcotry with the `main.yaml` configuration file and possible subdirectory `dfn_input` with fracture properties.
 The output files are placed in current system directory.
 
+
+# PFlotran with auxiliary reaction sandbox
+On Windows:
+1. install [Git for Windows](https://gitforwindows.org/) that provides Git BASH.
+2. install [Docker Desktop](https://docs.docker.com/desktop/install/windows-install/)
+
+On Linux just [install Docker](https://docs.docker.com/engine/install/ubuntu/) for Debian/Ubuntu bases distributions. 
+For RedHat based distributions se e.g. [installation on CentOS](https://docs.docker.com/engine/install/centos/).
+
+Having working terminal, installed Docker, and cloned [decovalex repository](https://github.com/GeoMop/Decovalex2023)
+in a local `decovalex` directory one can run e.g. the `eos_test` simulation as follows:
+```
+    cd decovalex/eos_test
+    ../fterm.sh 
+```
 
 ## Repository structure
 - `decodfn` 
