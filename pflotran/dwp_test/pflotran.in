@@ -36,26 +36,33 @@ END
 #=========================== chemistry ========================================
 CHEMISTRY
   PRIMARY_SPECIES
-  A(aq)
+  #DIFF_SCALE(aq)
+  #DECAY_SCALEB(aq)
   SiO2(aq)
   /
   IMMOBILE_SPECIES
     SiO2_im
   /
   REACTION_SANDBOX
-    EOS
+    DISTRIBUTED_WASTE_PACKAGE
       MOBILE_NAME SiO2(aq)   # dissolved species  
       IMMOBILE_NAME SiO2_im  # immobile species
-      SCALING_MINERAL A(s)   # volume fraction of given mineral is used to scale given DIFFUSION_RATE
+      DIFFUSION_SCALE_MINERAL DIFF_SCALE(s)   # volume fraction of given mineral is used to scale given DIFFUSION_RATE
+      DECAY_SCALE_MINERAL DECAY_SCALE(s)
       DIFFUSION_RATE 1.d-7   # [s^-1]
+      DECAY_RATE 2.d-7
     /
   /
   MINERALS
-    A(s)
+    DIFF_SCALE(s)
+    DECAY_SCALE(s)
   /
 
   MINERAL_KINETICS
-    A(s)
+    DIFF_SCALE(s)
+      RATE_CONSTANT 0.d0
+    /
+    DECAY_SCALE(s)
       RATE_CONSTANT 0.d0
     /
 #    SiO2(am)
@@ -102,15 +109,20 @@ DATASET initial_SiO2_im
   FILENAME input_fields.h5
 END
 
-DATASET eos_diff_rate
+DATASET dwp_diff_rate
   HDF5_DATASET_NAME DiffusionRate
   FILENAME input_fields.h5
 END
 
-DATASET Permeability
-  HDF5_DATASET_NAME Permeability
+DATASET dwp_decay_rate
+  HDF5_DATASET_NAME DecayRate
   FILENAME input_fields.h5
 END
+
+#DATASET Permeability
+#  HDF5_DATASET_NAME Permeability
+#  FILENAME input_fields.h5
+#END
 
 #=========================== material properties ==============================
 MATERIAL_PROPERTY soil1
@@ -235,7 +247,7 @@ END
 #=========================== transport constraints ============================
 CONSTRAINT initial_groundwater
   CONCENTRATIONS
-    A(aq)    1.d-40           T
+    #A(aq)    1.d-40           T
     SiO2(aq) 1.d-30           T
   /
   # [mol/m^3 bulk]
@@ -244,13 +256,14 @@ CONSTRAINT initial_groundwater
     SiO2_im DATASET initial_SiO2_im
   /  
   MINERALS
-    A(s) DATASET eos_diff_rate 1.d0 # volume fraction used as the diffucion rate; sorption arrea set to 1.d0 in orcer to aviod numerical errors.
+    DIFF_SCALE(s) DATASET dwp_diff_rate 1.d0 # volume fraction used as the diffucion rate; sorption arrea set to 1.d0 in orcer to aviod numerical errors.
+    DECAY_SCALE(s) DATASET dwp_decay_rate 1.d0 # volume fraction used as the diffucion rate; sorption arrea set to 1.d0 in orcer to aviod numerical errors.
   /
 END
 
 CONSTRAINT groundwater
   CONCENTRATIONS
-    A(aq)    1.d-40           T
+    #A(aq)    1.d-40           T
     SiO2(aq) 1.d-30           T
   /
 END

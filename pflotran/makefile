@@ -1,7 +1,7 @@
 
 # ======================= DEveloplment build
 pflotran_build:
-	./fterm.sh make -C ./pflotran_JB/src/pflotran pflotran 
+	export PFLOTRAN_IMAGE="flow123d/flow-dev-gnu-rel:4.0.3"; ./fterm.sh make -j5 -C ./pflotran_JB/src/pflotran pflotran 
 
 	
 
@@ -18,7 +18,15 @@ rel_image:
 
 # ======================= EOS test	
 
+dwp_run:
+	cd dwp_test && ../fterm.sh python3 prepare_fields.py
+	cd dwp_test; rm -rf out; mkdir -p out; cp * out; cd out
+	cd dwp_test/out && ../fterm.sh  
 
-eos_test_img:
-	cd eos_test && ../run.sh -c python3 prepare_fields.py
-	cd eos_test && ../run.sh 
+
+dwp_dev:
+	cd dwp_test; \
+	export PFLOTRAN_IMAGE="flow123d/flow-dev-gnu-rel:4.0.3"; \
+	python3 prepare_fields.py; \
+	rm -rf out; mkdir -p out; cp * out; cd out; \
+	../../fterm.sh ../../pflotran_JB/src/pflotran/pflotran  

@@ -251,14 +251,14 @@ def main():
     # EOS diffusion rate -  change in Y direction
     difusion_rate = arange_for_hdf5(dimensions, np.zeros(dimensions) + np.geomspace(1e-8, 1e-5, dimensions[1])[None, :, None])
     # permeability -  change in Z direction, flow prescribed along X direction
-    permeability = arange_for_hdf5(dimensions, np.zeros(dimensions) + np.geomspace(1e-25, 1e-19, dimensions[2])[None, None, :])
+    decay = arange_for_hdf5(dimensions, np.zeros(dimensions) + np.linspace(0, 1e-5, dimensions[2])[None, None, :])
     
     with File('input_fields.h5', 'w') as ff:
         ff.create_dataset('Cell Ids', data=np.arange(1, np.prod(dimensions)+1, dtype=int))
         ff.create_dataset('Coordinates/X [m]', data=xyz[0])
         ff.create_dataset('Coordinates/Y [m]', data=xyz[1])
         ff.create_dataset('Coordinates/Z [m]', data=xyz[2])        
-        ff.create_dataset('Permeability', data=permeability.flatten())
+        ff.create_dataset('DecayRate', data=decay.flatten())
         ff.create_dataset("InitImmobile", data=init_eos.flatten())
         ff.create_dataset("DiffusionRate", data=difusion_rate.flatten())
         

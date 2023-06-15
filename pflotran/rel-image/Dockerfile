@@ -10,7 +10,7 @@ RUN git clone ${source_repository}
 WORKDIR ${HOME}/workspace/pflotran
 RUN git checkout ${commit}
 WORKDIR ${HOME}/workspace/pflotran/src/pflotran
-RUN make  pflotran
+RUN make -j5 pflotran
 ENTRYPOINT ["/workspace/pflotran/src/pflotran/pflotran"]
 
 
