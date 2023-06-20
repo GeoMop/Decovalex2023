@@ -195,7 +195,7 @@ def map_dfn(grid, ellipses):
 def arange_for_hdf5(grid: Grid, a: np.array) -> np.array:
     return a.reshape(grid.cell_dimensions[::-1]).transpose([2,1,0])
 
-def porosity(grid: Grid, fractures: List[Fracture], fr_apperture: np.array, bulk_por: float) -> np.array:
+def porosity_mean(grid: Grid, fractures: List[Fracture], fr_apperture: np.array, bulk_por: float) -> np.array:
     '''Calculate fracture porosity for each cell of ECPM intersected by
        one or more fractures. Simplifying assumptions:
        1. each fracture crosses the cell parallel to cell faces,
@@ -212,6 +212,24 @@ def porosity(grid: Grid, fractures: List[Fracture], fr_apperture: np.array, bulk
     porosity = bulk_por + porosity * (1 - bulk_por)
     return arange_for_hdf5(grid, porosity)
 
+def porosity_min(grid: Grid, fractures: List[Fracture], fr_apperture: np.array, bulk_por: float) -> np.array:
+    '''Calculate fracture porosity to match the fast transport by the pore velocity field.
+       one or more fractures. Simplifying assumptions:
+       1. each fracture crosses the cell parallel to cell faces,
+       2. each fracture completely crosses the cell.
+       3. cells containing fractures have porosity given by the fractures only (not realistic, but lead to correct break-through times for advection only simulations.)
+          cells without fractures have matrix porosity `bulk_por`
+
+       fr_apperture: array of appertures of the `fractures`
+    '''
+    porosity = np.zeros(grid.cell_dimensions.prod(), dtype=float)
+    for fr, a in zip(fractures, fr_apperture):
+        if fr.cells:
+            normal_axis = np.argmax(np.abs(fr.ellipse.normal))
+            porosity[fr.cells] += a  / grid.step[normal_axis]
+        
+    porosity[porosity == 0] = bulk_por
+    return arange_for_hdf5(grid, porosity)
 
 
 

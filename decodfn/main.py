@@ -117,7 +117,11 @@ class DFN:
         # Repository configuration (optional)
         bc_cfg = cfg.get("surface_bc", None)
         self.surface_bc = SurfaceBC(**bc_cfg) if bc_cfg is not None else None
-
+                
+        if bool(cfg.get("mean_eq_porosity", False)):
+            self.porosity_fn = mapdfn.porosity_mean
+        else:
+            self.porosity_fn = mapdfn.porosity_min    
         self.ellipses = []
         # List of DFN fractures.
         self.fractures = []
@@ -181,8 +185,8 @@ class DFN:
             h5grp.create_dataset('Data', data=data_array)
 
     def crate_fields(self):
-        transmissivity, appertre = mapdfn.fr_transmissivity_apperture(self.workdir / "input_dfn")
-        porosity = mapdfn.porosity(self.grid, self.fractures, appertre, self.rock_mass.porosity)
+        transmissivity, appertre = mapdfn.fr_transmissivity_apperture(self.workdir / "input_dfn")        
+        porosity = self.porosity_fn(self.grid, self.fractures, appertre, self.rock_mass.porosity)
         k_iso = mapdfn.permIso(self.grid, self.fractures, transmissivity, self.rock_mass.permeability)
         # k_aniso = mapdfn.permAniso(fracture, ellipses, transmissivity, self.grid_step, self.k_background)
         self.add_field('porosity.h5', 'Porosity', porosity)

@@ -8,6 +8,7 @@ rock:
     permeability: 1.e-24
     porosity: 0.0005
     tortuosity_factor: 0.001
-    
+
+mean_eq_porosity: False
 dfn_origin: [-500, -500, -500] 
 

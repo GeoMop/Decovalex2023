@@ -64,7 +64,7 @@ in a local `decovalex` directory one can run e.g. the `dwp_test` simulation as f
     - `repo_multiscale` : basic multiscale repository model
     
 
-## EOS diffusion model
+## Diffusion Waste PAckage model
 The modified Pflotran sources are in the [forked repository](https://github.com/flow123d/pflotran.git).
 To build the release image use:
 ```
