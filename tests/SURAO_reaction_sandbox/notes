@@ -1,8 +1,0 @@
-- napodařilo se spustit, potřebuje speciální lambda.dat s Tracer_1
-- asi rozumnější použít Iod jak tracer, bez nutnosti do tabulky zasahovat
-- zahrnutí výpočtu zdrojového členu v update_vypoctu_zdroje;
-  nutno mít test a zahrnout do repozitáře s pflotranem
-  
-  vypadá to, že výpočet waste_rate kopíruje dacay_rate, ale je tam asi chybně výpočet Jacobiánu a
-  navíc se pomocí UpdateKinetics dále zmenšuje objem zdrojového členu, no úplně jasné mi to není, 
-  protože to dělá vlastně ten dacay
