@@ -18,7 +18,7 @@ import numpy as np
 import yaml
 from h5py import File
 
-from . import mapdfn
+import mapdfn
 
 
 # script_dir = os.path.dirname(os.path.realpath(__file__))
@@ -129,7 +129,10 @@ class DFN:
 
 
     def create_dfn(self):
-        # Call mapdfn functions
+        """
+        Call mapdfn functions
+        TODO: call directly from the constructor.
+        """
         logging.log(logging.INFO, 'Mapping DFN to grid...')
         self.ellipses = mapdfn.readEllipse(self.workdir / "input_dfn")
         logging.log(logging.INFO, f'loaded {len(self.ellipses)} fracture ellipses')
@@ -149,7 +152,10 @@ class DFN:
         mask[slices] = 1
 
     def repository_fields(self):
-
+        """
+        Create field marking the cells with repository.
+        Used to mark sources for Reaction Sandbox DWP
+        """
         repo_cells = np.zeros(self.grid.cell_dimensions, dtype=int)
 
         for block in self.repository:
@@ -158,6 +164,26 @@ class DFN:
                 drift_origin = block.origin + i_drift * block.drift_step
                 self.mark_line(repo_cells, drift_origin, block.drift_direction, block.drift_lengh)
         return repo_cells
+
+
+
+
+    
+        
+####################################################################################################################################š
+    def make_repo_field(self, repo_cells, bg_value, repo_value):
+        """
+        bg_value : float - value for the cells out of the repositoty
+        repo_value : float - value for the cells containing the repository
+        """
+        return bg_value + (repo_value - bg_value) * self.repository_mask
+
+#################################################################################################################
+        
+        
+
+
+
     def surface_plot(self, field_xy):
         fig, ax = plt.subplots()
         im = ax.imshow(field_xy, cmap='viridis', interpolation='nearest')
@@ -194,13 +220,37 @@ class DFN:
         self.add_field('tortuosity.h5', 'Tortuosity', self.rock_mass.tortuosity_factor / porosity)
 
         if len(self.repository) != 0:
-            repository_mask = self.repository_fields()
-            self.add_field('repository.h5', 'Repository', repository_mask)
+            self.create_repo_fields()
 
         if self.surface_bc:
             bc_top_pressure = self.surface_bc.surface_field(self.grid)
             self.surface_plot(bc_top_pressure)
             self.add_field('pressure_top.h5', 'bc_top_presuure', bc_top_pressure, axes=(0,1))
+
+    def create_repo_fields(self):
+        self.repository_mask = self.repository_fields()
+        self.add_field('repository.h5', 'Repository', self.repository_mask)
+
+        self.add_field('init_instant.h5', 'Init_instant',
+                       self.make_repo_field(1e-25, 2.49e-10))
+        self.add_field('init_fractional.h5', 'Init_fractional',
+                       self.make_repo_field(1e-25, 2.24e-12))
+        self.add_field('decay.h5', 'DecayRate',
+                       self.make_repo_field(0.0, 1e-7))
+        self.add_field('diffusion.h5', 'DiffRate',
+                       self.make_repo_field(0.0, 1e-9))
+
+
+
+########################################################################################################################
+        """											  
+		V pripade toho typu datasetu (v dokumentaci nazvany Gridded dataset)
+		to podle vizualizace v Paraview vypada zatim funkcne
+        """
+#############################################################################################################################
+
+
+
 
     def main_output(self):
 
@@ -213,6 +263,37 @@ class DFN:
 
         # Write same information to mapELLIPSES.h5. This file can be opened in Paraview
         # by chosing "PFLOTRAN file" as the format.
+
+
+
+        
+#############################################################################################
+        """
+		Tento postup asi nespravne (nebo alespon neocekavane) prirazuje souradnice, protoze ve 
+		vyslednem rozlozeni UOS je evidentne nejaky system, ale neni konzistantny z HU v ramci
+		datasetu vyse
+        """
+
+        decay = self.decay_fields()
+        init_instant = self.init_instant_fields() 
+        init_fractional = self.init_fractional_fields()
+        diffusion_rate = self.diffusion_rate_fields()          															
+																							
+        with File('input_fields.h5', 'w') as ff:											
+            ff.create_dataset('Cell Ids', data=np.arange(1, self.grid.cell_dimensions.prod() + 1, dtype=int))													
+            ff.create_dataset('Coordinates/X [m]', data=self.xyz[0])							
+            ff.create_dataset('Coordinates/Y [m]', data=self.xyz[1])						
+            ff.create_dataset('Coordinates/Z [m]', data=self.xyz[2])        				
+            ff.create_dataset('DecayRate', data=decay.flatten())							
+            ff.create_dataset("InitInstant", data=init_instant.flatten())
+            ff.create_dataset("InitFractional", data=init_fractional.flatten())
+            ff.create_dataset("DiffusionRate", data=diffusion_rate.flatten())
+#############################################################################################   
+
+
+
+
+        
         with field_file('mapELLIPSES.h5') as ff:
             ff.create_dataset('Coordinates/Z [m]', data=self.xyz[2])
             ff.create_dataset('Coordinates/Y [m]', data=self.xyz[1])

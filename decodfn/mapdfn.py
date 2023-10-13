@@ -8,7 +8,7 @@ from typing import *
 import attrs
 import numpy as np
 
-from . import transformations as tr
+import transformations as tr
 
 
 def float_array(x: List[float]) -> np.array:
@@ -190,6 +190,7 @@ def map_dfn(grid, ellipses):
 
      JB TODO: allow smaller ECPM domain
     '''
+    logging.log(logging.INFO, f"Callculating Fracture - Cell intersections ...")
     return [fracture_for_ellipse(grid, ie, ellipse) for ie, ellipse in enumerate(ellipses)]
 
 def arange_for_hdf5(grid: Grid, a: np.array) -> np.array:
