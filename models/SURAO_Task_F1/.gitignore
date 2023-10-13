@@ -1,0 +1,5 @@
+# Files that will be ignored by the git.
+# Output files of the model.
+# Put some reference output files into `refout` subfolder. 
+./pflotran.out
+./*.h5  # generated PFlotran inputs and PFlotran outputs
