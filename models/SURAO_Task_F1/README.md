@@ -36,6 +36,8 @@ The fracture set is then homogenized into a structured grid by the `../../src/ma
 
 ## Repository Files (scripts and inputs)
 lambda.dat - PFlotran chemistry database 
+regions_2.txt - external file with region definitions, included from pflotran.in
+pressure_boundary.h5 - prescribed field on the boundary (resource ??)
 pflotran.in - PFlotran man input
 stoch_fractures_WP.in - Some other ?? PFlotran input
 main.py - symbolic link to the main script for homogenization and preparation of the PFlotran inputs 

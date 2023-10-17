@@ -28,9 +28,9 @@ class Grid:
         return cls(np.array(origin), s, d, cell_dim)
 
     origin: np.array            # 3d point
-    step: np.array              # cell dimensions in XYZ [m]
-    dimensions: np.array        # outer dimensions of the domain [m]
-    cell_dimensions: np.array   # int, number of cells in XYZ
+    step: np.array              # [step_x, step_y, step_z] [m]
+    dimensions: np.array        # [lx, ly, lz] [m]
+    cell_dimensions: np.array   # [nx, ny, nz], int, number of cells in XYZ
 
 
     def cell_coord(self, x: np.array) -> np.array:
@@ -194,6 +194,11 @@ def map_dfn(grid, ellipses):
     return [fracture_for_ellipse(grid, ie, ellipse) for ie, ellipse in enumerate(ellipses)]
 
 def arange_for_hdf5(grid: Grid, a: np.array) -> np.array:
+    """
+    grid.cell_dimension: (nx, ny, nz)
+    a - array for cells indexed by: `intersect_cell`  with X coordinate the fastest running (i.e. the last one)
+    return - array with Z coordinate be the fastest running
+    """
     return a.reshape(grid.cell_dimensions[::-1]).transpose([2,1,0])
 
 def porosity_mean(grid: Grid, fractures: List[Fracture], fr_apperture: np.array, bulk_por: float) -> np.array:

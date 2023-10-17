@@ -1,0 +1,210 @@
+=========================== simulation mode ========================================
+SIMULATION
+  SIMULATION_TYPE SUBSURFACE
+  PROCESS_MODELS
+    SUBSURFACE_FLOW flow
+      MODE RICHARDS
+      OPTIONS
+        STEADY_STATE
+      /
+    /
+  /
+
+  CHECKPOINT
+    FORMAT HDF5
+  /
+
+END
+SUBSURFACE
+
+#=========================== discretization ===================================
+GRID
+  TYPE structured
+  ORIGIN -2500.d0 -1000.d0 -500.d0
+  #GRAVITY 0.d0 0.d0 0.d0
+  NXYZ 250 66 40
+  DXYZ
+    20d0
+    30d0
+    25d0
+  /
+END
+
+#=========================== fluid properties =================================
+FLUID_PROPERTY
+  DIFFUSION_COEFFICIENT 1.d-9
+END
+
+#=========================== fluid properties =================================
+DATASET Permeability
+  HDF5_DATASET_NAME Permeability
+  FILENAME input_fields.h5
+END
+
+DATASET Porosity
+  HDF5_DATASET_NAME Porosity
+  FILENAME input_fields.h5
+END
+
+DATASET Tortuosity
+  HDF5_DATASET_NAME Tortuosity
+  FILENAME input_fields.h5
+END
+
+DATASET surface
+  FILENAME pressure_boundary.h5
+  HDF5_DATASET_NAME surface_top
+END
+#=========================== material properties ==============================
+MATERIAL_PROPERTY soil
+  ID 1
+  TORTUOSITY DATASET Tortuosity
+  ROCK_DENSITY 2000.d0
+  LONGITUDINAL_DISPERSIVITY 0.5
+  CHARACTERISTIC_CURVES default
+  PERMEABILITY
+    DATASET Permeability
+    #PERM_ISO 1.d-15
+  /
+  POROSITY DATASET Porosity
+END
+
+#=========================== characteristic curves ============================
+CHARACTERISTIC_CURVES default
+  SATURATION_FUNCTION VAN_GENUCHTEN
+    M 0.5d0
+    ALPHA  1.d-4
+    LIQUID_RESIDUAL_SATURATION 0.1d0
+    MAX_CAPILLARY_PRESSURE 1.d8
+  /
+  PERMEABILITY_FUNCTION MUALEM_VG_LIQ
+    M 0.5d0
+    LIQUID_RESIDUAL_SATURATION 0.1d0
+  /
+END
+
+#=========================== times ============================================
+TIME
+  FINAL_TIME 10 y
+  INITIAL_TIMESTEP_SIZE 1.d0 d
+  MAXIMUM_TIMESTEP_SIZE 5 y
+END
+
+#=========================== output options ===================================
+OUTPUT
+  SNAPSHOT_FILE
+  / 
+END
+#=========================== integral flux and observation points===================================
+
+INTEGRAL_FLUX surface
+  PLANE
+    -2500.d0 -1000.d0 500.d0
+     2500.d0 -1000.d0 500.d0
+     2500.d0   980.d0 500.d0
+  /
+END
+
+INTEGRAL_FLUX left
+  POLYGON
+    -2500.d0 -1000.d0 500.d0
+     -800.d0 -1000.d0 500.d0
+     -800.d0   980.d0 500.d0
+    -2500.d0   980.d0 500.d0
+  /
+END
+
+INTEGRAL_FLUX slope
+  POLYGON
+    -800.d0 -1000.d0 500.d0
+    1200.d0 -1000.d0 500.d0
+    1200.d0   980.d0 500.d0
+    -800.d0   980.d0 500.d0
+  /
+END
+
+INTEGRAL_FLUX right
+  POLYGON
+    1200.d0 -1000.d0 500.d0
+    2500.d0 -1000.d0 500.d0
+    2500.d0   980.d0 500.d0
+    1200.d0   980.d0 500.d0
+  /
+END
+
+INTEGRAL_FLUX max_slope
+  COORDINATES_AND_DIRECTIONS
+     1190.0 -595.0 500. 0. 0. 1.
+   /
+END
+
+INTEGRAL_FLUX max_lowest
+  COORDINATES_AND_DIRECTIONS
+    2030.0 -535.0 500. 0. 0. 1.
+    /
+END
+
+
+REGION obs_slope
+  COORDINATE 1190.0 -595.0 490.
+END
+
+REGION obs_lowest
+  COORDINATE 2030.0 -535.0 490.
+END
+
+REGION HCD_slope
+  COORDINATE 2000 -169 500
+END 
+
+REGION HCD_lowpoint
+  COORDINATE 1837 -391 500
+END
+
+OBSERVATION
+  REGION obs_slope
+END
+
+OBSERVATION
+  REGION obs_lowest
+END
+
+OBSERVATION
+  REGION HCD_slope
+END
+
+OBSERVATION
+  REGION HCD_lowpoint
+END
+#=========================== regions ==========================================
+EXTERNAL_FILE ./regions_2.txt  
+
+#=========================== flow conditions ==================================
+FLOW_CONDITION initial
+  TYPE    
+    LIQUID_PRESSURE HYDROSTATIC
+  /
+  DATUM DATASET surface
+  LIQUID_PRESSURE 101325.d0
+END
+
+#=========================== condition couplers ===============================
+# initial condition
+INITIAL_CONDITION
+  FLOW_CONDITION initial
+  REGION all
+END
+
+BOUNDARY_CONDITION top
+  FLOW_CONDITION initial
+  REGION top
+END
+#=========================== stratigraphy couplers ============================
+STRATA
+  REGION all
+  MATERIAL soil
+END
+
+END_SUBSURFACE
+
+

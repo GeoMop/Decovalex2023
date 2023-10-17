@@ -16,7 +16,7 @@ import attrs
 import matplotlib.pyplot as plt
 import numpy as np
 import yaml
-from h5py import File
+import h5py
 
 import mapdfn
 
@@ -35,8 +35,8 @@ def field_file(fname):
     this way file is closed automatically.
     """
     #print(f"Creating {fname} data file.")
-    return File(fname, 'w')
-
+    ff = h5py.File(fname, 'w')
+    return ff
 
 
 
@@ -112,12 +112,19 @@ class DFN:
         # Bulk material parameters
         self.dfn_origin = cfg['dfn_origin']
         # Origion of the DFN domain, not used yet
+        self.fr_set_slice = cfg.get('fr_set_slice', [None, None, None])
+
         repo_cfg = cfg.get('repository', [])
         self.repository = [RepositoryBlock(**b) for b in repo_cfg]
         # Repository configuration (optional)
+        if repo_cfg:
+            self.src_cfg = cfg['source_fields']
+            # Configuration of the source model (Reaction sandbox DWP) fields
+
         bc_cfg = cfg.get("surface_bc", None)
         self.surface_bc = SurfaceBC(**bc_cfg) if bc_cfg is not None else None
-                
+        # Boundary field (optional)
+
         if bool(cfg.get("mean_eq_porosity", False)):
             self.porosity_fn = mapdfn.porosity_mean
         else:
@@ -134,44 +141,16 @@ class DFN:
         TODO: call directly from the constructor.
         """
         logging.log(logging.INFO, 'Mapping DFN to grid...')
-        self.ellipses = mapdfn.readEllipse(self.workdir / "input_dfn")
+        fr_slice = slice(*self.fr_set_slice)
+        self.ellipses = mapdfn.readEllipse(self.workdir / "input_dfn")[fr_slice]
         logging.log(logging.INFO, f'loaded {len(self.ellipses)} fracture ellipses')
         self.fractures = mapdfn.map_dfn(self.grid, self.ellipses)
-
-
-    def mark_line(self, mask, x, vec, length):
-        """
-        Mark cells intersected by line.
-        DEal with lines out of the grid.
-        """
-        ia = self.grid.cell_coord(self.grid.trim(x))
-        ia = np.maximum(np.zeros_like(ia), ia)
-        ib = self.grid.cell_coord(self.grid.trim(x + length * vec))
-        ib = np.minimum(self.grid.cell_dimensions - 1, ib)
-        slices = tuple( [ a if s==0 else np.s_[a:b:s] for a,b,s in zip(ia,ib,vec) ])
-        mask[slices] = 1
-
-    def repository_fields(self):
-        """
-        Create field marking the cells with repository.
-        Used to mark sources for Reaction Sandbox DWP
-        """
-        repo_cells = np.zeros(self.grid.cell_dimensions, dtype=int)
-
-        for block in self.repository:
-            block.validate()
-            for i_drift in range(block.n_drifts):
-                drift_origin = block.origin + i_drift * block.drift_step
-                self.mark_line(repo_cells, drift_origin, block.drift_direction, block.drift_lengh)
-        return repo_cells
-
-
 
 
     
         
 ####################################################################################################################################š
-    def make_repo_field(self, repo_cells, bg_value, repo_value):
+    def make_repo_field(self, bg_value, repo_value):
         """
         bg_value : float - value for the cells out of the repositoty
         repo_value : float - value for the cells containing the repository
@@ -191,33 +170,78 @@ class DFN:
         cbar.ax.set_ylabel('Color bar', rotation=-90, va="bottom")
         fig.savefig('pressure_top.pdf')
 
-    def add_field(self, fname, name, data_array, axes=(0,1,2)):
+    def add_field(self, name, data_array):
         self.output_fields[name] = data_array
 
+    def write_field_group(self, f, field, data, axes=(0, 1, 2)):
+        # 3d uniform grid
+        h5grp = f.create_group(field)
+        # 3D will always be XYZ where as 2D can be XY, XZ, etc. and 1D can be X, Y or Z
+        h5grp.attrs['Dimension'] = np.string_(''.join(['XYZ'[ax] for ax in axes]))
+        # based on Dimension, specify the uniform grid spacing
+        h5grp.attrs['Discretization'] = [self.grid.step[ax] for ax in axes]
+        # again, depends on Dimension
+        h5grp.attrs['Origin'] = [self.grid.origin[ax] for ax in axes]
+        # leave this line out if not cell centered.  If set to False, it will still
+        # be true (issue with HDF5 and Fortran)
+        h5grp.attrs['Cell Centered'] = [True]
+        h5grp.attrs['Transient'] = False
+        h5grp.attrs['Interpolation Method'] = np.string_('Step')
+        h5grp.create_dataset('Data', data=data)
+
+    def field_file(self, fname, name, data_array, axes=(0, 1, 2)):
         with field_file(fname) as f:
-            # 3d uniform grid
-            h5grp = f.create_group(name)
-            # 3D will always be XYZ where as 2D can be XY, XZ, etc. and 1D can be X, Y or Z
-            h5grp.attrs['Dimension'] = np.string_(''.join(['XYZ'[ax] for ax in axes]))
-            # based on Dimension, specify the uniform grid spacing
-            h5grp.attrs['Discretization'] = [self.grid.step[ax] for ax in axes]
-            # again, depends on Dimension
-            h5grp.attrs['Origin'] = [self.grid.origin[ax] for ax in axes]
-            # leave this line out if not cell centered.  If set to False, it will still
-            # be true (issue with HDF5 and Fortran)
-            h5grp.attrs['Cell Centered'] = [True]
-            h5grp.attrs['Transient'] = False
-            h5grp.attrs['Interpolation Method'] = np.string_('Step')
-            h5grp.create_dataset('Data', data=data_array)
+            self.write_field_group(f, name, data_array, axes)
+
+
+
+    def mark_line(self, mask, x, vec, length):
+        """
+        Mark cells intersected by line.
+        DEal with lines out of the grid.
+        """
+        ia = self.grid.cell_coord(self.grid.trim(x))
+        ia = np.maximum(np.zeros_like(ia), ia)
+        ib = self.grid.cell_coord(self.grid.trim(x + length * vec))
+        ib = np.minimum(self.grid.cell_dimensions - 1, ib)
+        slices = tuple( [ a if s==0 else np.s_[a:b:s] for a,b,s in zip(ia,ib,vec) ])
+        mask[slices] = 1
+
+    def repository_field(self):
+        """
+        Create field marking the cells with repository.
+        Used to mark sources for Reaction Sandbox DWP
+        """
+        repo_cells = np.zeros(self.grid.cell_dimensions, dtype=float)
+
+        for block in self.repository:
+            block.validate()
+            for i_drift in range(block.n_drifts):
+                drift_origin = block.origin + i_drift * block.drift_step
+                self.mark_line(repo_cells, drift_origin, block.drift_direction, block.drift_lengh)
+        return repo_cells
+
+    def create_repo_fields(self):
+        self.repository_mask = self.repository_field()
+        self.add_field('Repository', self.repository_mask)
+
+        source_fields = ['InitInstant', 'InitFractional', 'DecayRate', 'DiffusionRate']
+        for field in source_fields:
+            field_cfg = self.src_cfg[field]
+            bg_cells, src_cells = [float(field_cfg[key]) for key in ['bg_cells', 'src_cells'] ]
+            self.add_field(field, self.make_repo_field(bg_cells, src_cells))
+
+
+
 
     def crate_fields(self):
         transmissivity, appertre = mapdfn.fr_transmissivity_apperture(self.workdir / "input_dfn")        
         porosity = self.porosity_fn(self.grid, self.fractures, appertre, self.rock_mass.porosity)
         k_iso = mapdfn.permIso(self.grid, self.fractures, transmissivity, self.rock_mass.permeability)
         # k_aniso = mapdfn.permAniso(fracture, ellipses, transmissivity, self.grid_step, self.k_background)
-        self.add_field('porosity.h5', 'Porosity', porosity)
-        self.add_field('isotropic_k.h5', 'Permeability', k_iso)
-        self.add_field('tortuosity.h5', 'Tortuosity', self.rock_mass.tortuosity_factor / porosity)
+        self.add_field('Porosity', porosity)
+        self.add_field('Permeability', k_iso)
+        self.add_field('Tortuosity', self.rock_mass.tortuosity_factor / porosity)
 
         if len(self.repository) != 0:
             self.create_repo_fields()
@@ -225,20 +249,7 @@ class DFN:
         if self.surface_bc:
             bc_top_pressure = self.surface_bc.surface_field(self.grid)
             self.surface_plot(bc_top_pressure)
-            self.add_field('pressure_top.h5', 'bc_top_presuure', bc_top_pressure, axes=(0,1))
-
-    def create_repo_fields(self):
-        self.repository_mask = self.repository_fields()
-        self.add_field('repository.h5', 'Repository', self.repository_mask)
-
-        self.add_field('init_instant.h5', 'Init_instant',
-                       self.make_repo_field(1e-25, 2.49e-10))
-        self.add_field('init_fractional.h5', 'Init_fractional',
-                       self.make_repo_field(1e-25, 2.24e-12))
-        self.add_field('decay.h5', 'DecayRate',
-                       self.make_repo_field(0.0, 1e-7))
-        self.add_field('diffusion.h5', 'DiffRate',
-                       self.make_repo_field(0.0, 1e-9))
+            self.field_file('pressure_top.h5', 'bc_top_presuure', bc_top_pressure, axes=(0, 1))
 
 
 
@@ -249,17 +260,42 @@ class DFN:
         """
 #############################################################################################################################
 
+    def input_fields(self, field_dict):
+        """
+        Create the file with fields accessible in Paraview.
+        """
+        with field_file('input_fields.h5') as ff:
+            ff.create_dataset('Cell Ids', data=np.arange(1, self.grid.cell_dimensions.prod() + 1, dtype=int))
+            for name, field in field_dict.items():
+                print(f"Create dataset {name}")
+                # PFLOTRAN cell numbering is undocumented, but seems to be
+                # CELL_INDEXED dataset
+                ff.create_dataset(f'{name}', data=field.transpose([2,1,0]).flatten())
 
+                # PFLOTRAN seems to allow only CELL_INDEXED dataset for initial and material fields.
+                # The GRIDED deataset does not work
+                #self.write_field_group(ff, name, field)
+    def paraview_fields(self, field_dict):
+        """
+        Create the file with fields accessible in Paraview.
+        """
+        xyz = [o + s * np.arange(0, n + 1) for o, n, s in zip(self.grid.origin, self.grid.cell_dimensions, self.grid.step)]
 
+        with field_file('input_para.h5') as ff:
+            for name, field in field_dict.items():
+                ff.create_dataset(f'Time:  0.00000E+00 y/{name}', data=field)
+            ff.create_dataset('Coordinates/Z [m]', data=xyz[2])
+            ff.create_dataset('Coordinates/Y [m]', data=xyz[1])
+            ff.create_dataset('Coordinates/X [m]', data=xyz[0])
 
     def main_output(self):
-
-        self.xyz = [o + s * np.arange(0, n + 1) for o, n, s in zip(self.grid.origin, self.grid.cell_dimensions, self.grid.step)]
-
-        # first fracture index per cell
-        self.fracture_idx = np.full(self.grid.cell_dimensions.prod(), -1, dtype=float)
+        fracture_id = np.full(self.grid.cell_dimensions.prod(), -1, dtype=float)
         for i, fr in enumerate(self.fractures):
-            self.fracture_idx[fr.cells] = i
+            fracture_id[fr.cells] = i
+        self.add_field("fr_id", mapdfn.arange_for_hdf5(self.grid, fracture_id))
+        self.paraview_fields(self.output_fields)
+        self.input_fields(self.output_fields)
+        # first fracture index per cell
 
         # Write same information to mapELLIPSES.h5. This file can be opened in Paraview
         # by chosing "PFLOTRAN file" as the format.
@@ -274,36 +310,39 @@ class DFN:
 		datasetu vyse
         """
 
-        decay = self.decay_fields()
-        init_instant = self.init_instant_fields() 
-        init_fractional = self.init_fractional_fields()
-        diffusion_rate = self.diffusion_rate_fields()          															
-																							
-        with File('input_fields.h5', 'w') as ff:											
-            ff.create_dataset('Cell Ids', data=np.arange(1, self.grid.cell_dimensions.prod() + 1, dtype=int))													
-            ff.create_dataset('Coordinates/X [m]', data=self.xyz[0])							
-            ff.create_dataset('Coordinates/Y [m]', data=self.xyz[1])						
-            ff.create_dataset('Coordinates/Z [m]', data=self.xyz[2])        				
-            ff.create_dataset('DecayRate', data=decay.flatten())							
-            ff.create_dataset("InitInstant", data=init_instant.flatten())
-            ff.create_dataset("InitFractional", data=init_fractional.flatten())
-            ff.create_dataset("DiffusionRate", data=diffusion_rate.flatten())
+        # decay = self.decay_fields()
+        # init_instant = self.init_instant_fields()
+        # init_fractional = self.init_fractional_fields()
+        # diffusion_rate = self.diffusion_rate_fields()
+		#
+        # with File('input_fields.h5', 'w') as ff:
+        #     ff.create_dataset('Cell Ids', data=np.arange(1, self.grid.cell_dimensions.prod() + 1, dtype=int))
+        #     ff.create_dataset('Coordinates/X [m]', data=self.xyz[0])
+        #     ff.create_dataset('Coordinates/Y [m]', data=self.xyz[1])
+        #     ff.create_dataset('Coordinates/Z [m]', data=self.xyz[2])
+        #     ff.create_dataset('DecayRate', data=decay.flatten())
+        #     ff.create_dataset("InitInstant", data=init_instant.flatten())
+        #     ff.create_dataset("InitFractional", data=init_fractional.flatten())
+        #     ff.create_dataset("DiffusionRate", data=diffusion_rate.flatten())
 #############################################################################################   
 
 
 
 
         
-        with field_file('mapELLIPSES.h5') as ff:
-            ff.create_dataset('Coordinates/Z [m]', data=self.xyz[2])
-            ff.create_dataset('Coordinates/Y [m]', data=self.xyz[1])
-            ff.create_dataset('Coordinates/X [m]', data=self.xyz[0])
-            for name, field in self.output_fields.items():
-                ff.create_dataset(f'Time:  0.00000E+00 y/{name}', data=field)
+        # with field_file('input_fields.h5') as ff:
+        #     for name, field in self.output_fields.items():
+        #         ff.create_dataset(f'Time:  0.00000E+00 y/{name}', data=field.flatten())
+        #     #ff.create_dataset('Cell Ids', data=np.arange(1, self.grid.cell_dimensions.prod() + 1, dtype=int))
+        #     ff.create_dataset('Coordinates/Z [m]', data=self.xyz[2])
+        #     ff.create_dataset('Coordinates/Y [m]', data=self.xyz[1])
+        #     ff.create_dataset('Coordinates/X [m]', data=self.xyz[0])
+
             #ff.create_dataset('Time:  0.00000E+00 y/Fracture', data=self.fracture_idx)
             #ff.create_dataset('Time:  0.00000E+00 y/PermX', data=kx)
             #ff.create_dataset('Time:  0.00000E+00 y/PermY', data=ky)
             #ff.create_dataset('Time:  0.00000E+00 y/PermZ', data=kz)
+
 
 
         # with field_file('anisotropic_k.h5') as f:

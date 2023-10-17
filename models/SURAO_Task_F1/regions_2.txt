@@ -1,0 +1,412 @@
+REGION all
+  COORDINATES
+    -1.d20 -1.d20 -1.d20
+    1.d20 1.d20 1.d20
+  /
+END 
+
+REGION repository
+  COORDINATES
+    -1980.d0 -320.d0 50.d0
+    -1000.d0  320.d0 25.d0
+  /
+END 
+
+REGION inflow
+  FACE WEST
+  COORDINATES
+    -2500.d0 -1000.d0 -500.d0
+    -2500.d0 980.d0 500.d0
+    /
+END
+
+REGION outflow
+  FACE EAST
+  COORDINATES
+    2500.d0 980.d0 500.d0
+    2500.d0 -1000.d0 500.d0
+    /
+END
+
+REGION top
+  FACE TOP
+  COORDINATES
+    -2500 -1000 500
+    2500 980 500
+    /
+END
+
+
+REGION drift_left1
+  COORDINATES
+    -1980 20 50
+    -1960 320 25
+   /
+END
+    
+REGION drift_right1
+  COORDINATES
+    -1980 -320 50
+    -1960 -20 25
+   /
+END
+        
+
+REGION drift_left2
+  COORDINATES
+    -1940 20 50
+    -1920 320 25
+   /
+END
+    
+REGION drift_right2
+  COORDINATES
+    -1940 -320 50
+    -1920 -20 25
+   /
+END
+        
+
+REGION drift_left3
+  COORDINATES
+    -1900 20 50
+    -1880 320 25
+   /
+END
+    
+REGION drift_right3
+  COORDINATES
+    -1900 -320 50
+    -1880 -20 25
+   /
+END
+        
+
+REGION drift_left4
+  COORDINATES
+    -1860 20 50
+    -1840 320 25
+   /
+END
+    
+REGION drift_right4
+  COORDINATES
+    -1860 -320 50
+    -1840 -20 25
+   /
+END
+        
+
+REGION drift_left5
+  COORDINATES
+    -1820 20 50
+    -1800 320 25
+   /
+END
+    
+REGION drift_right5
+  COORDINATES
+    -1820 -320 50
+    -1800 -20 25
+   /
+END
+        
+
+REGION drift_left6
+  COORDINATES
+    -1780 20 50
+    -1760 320 25
+   /
+END
+    
+REGION drift_right6
+  COORDINATES
+    -1780 -320 50
+    -1760 -20 25
+   /
+END
+        
+
+REGION drift_left7
+  COORDINATES
+    -1740 20 50
+    -1720 320 25
+   /
+END
+    
+REGION drift_right7
+  COORDINATES
+    -1740 -320 50
+    -1720 -20 25
+   /
+END
+        
+
+REGION drift_left8
+  COORDINATES
+    -1700 20 50
+    -1680 320 25
+   /
+END
+    
+REGION drift_right8
+  COORDINATES
+    -1700 -320 50
+    -1680 -20 25
+   /
+END
+        
+
+REGION drift_left9
+  COORDINATES
+    -1660 20 50
+    -1640 320 25
+   /
+END
+    
+REGION drift_right9
+  COORDINATES
+    -1660 -320 50
+    -1640 -20 25
+   /
+END
+        
+
+REGION drift_left10
+  COORDINATES
+    -1620 20 50
+    -1600 320 25
+   /
+END
+    
+REGION drift_right10
+  COORDINATES
+    -1620 -320 50
+    -1600 -20 25
+   /
+END
+        
+
+REGION drift_left11
+  COORDINATES
+    -1580 20 50
+    -1560 320 25
+   /
+END
+    
+REGION drift_right11
+  COORDINATES
+    -1580 -320 50
+    -1560 -20 25
+   /
+END
+        
+
+REGION drift_left12
+  COORDINATES
+    -1540 20 50
+    -1520 320 25
+   /
+END
+    
+REGION drift_right12
+  COORDINATES
+    -1540 -320 50
+    -1520 -20 25
+   /
+END
+        
+
+REGION drift_left13
+  COORDINATES
+    -1250 20 50
+    -1480 320 25
+   /
+END
+    
+REGION drift_right13
+  COORDINATES
+    -1250 -320 50
+    -1480 -20 25
+   /
+END
+        
+
+REGION drift_left14
+  COORDINATES
+    -1460 20 50
+    -1440 320 25
+   /
+END
+    
+REGION drift_right14
+  COORDINATES
+    -1460 -320 50
+    -1440 -20 25
+   /
+END
+        
+
+REGION drift_left15
+  COORDINATES
+    -1420 20 50
+    -1400 320 25
+   /
+END
+    
+REGION drift_right15
+  COORDINATES
+    -1420 -320 50
+    -1400 -20 25
+   /
+END
+        
+
+REGION drift_left16
+  COORDINATES
+    -1380 20 50
+    -1360 320 25
+   /
+END
+    
+REGION drift_right16
+  COORDINATES
+    -1380 -320 50
+    -1360 -20 25
+   /
+END
+        
+
+REGION drift_left17
+  COORDINATES
+    -1340 20 50
+    -1320 320 25
+   /
+END
+    
+REGION drift_right17
+  COORDINATES
+    -1340 -320 50
+    -1320 -20 25
+   /
+END
+        
+
+REGION drift_left18
+  COORDINATES
+    -1300 20 50
+    -1280 320 25
+   /
+END
+    
+REGION drift_right18
+  COORDINATES
+    -1300 -320 50
+    -1280 -20 25
+   /
+END
+        
+
+REGION drift_left19
+  COORDINATES
+    -1260 20 50
+    -1240 320 25
+   /
+END
+    
+REGION drift_right19
+  COORDINATES
+    -1260 -320 50
+    -1240 -20 25
+   /
+END
+        
+
+REGION drift_left20
+  COORDINATES
+    -1220 20 50
+    -1200 320 25
+   /
+END
+    
+REGION drift_right20
+  COORDINATES
+    -1220 -320 50
+    -1200 -20 25
+   /
+END
+        
+
+REGION drift_left21
+  COORDINATES
+    -1180 20 50
+    -1160 320 25
+   /
+END
+    
+REGION drift_right21
+  COORDINATES
+    -1180 -320 50
+    -1160 -20 25
+   /
+END
+        
+
+REGION drift_left22
+  COORDINATES
+    -1140 20 50
+    -1120 320 25
+   /
+END
+    
+REGION drift_right22
+  COORDINATES
+    -1140 -320 50
+    -1120 -20 25
+   /
+END
+        
+
+REGION drift_left23
+  COORDINATES
+    -1100 20 50
+    -1080 320 25
+   /
+END
+    
+REGION drift_right23
+  COORDINATES
+    -1100 -320 50
+    -1080 -20 25
+   /
+END
+        
+
+REGION drift_left24
+  COORDINATES
+    -1060 20 50
+    -1040 320 25
+   /
+END
+    
+REGION drift_right24
+  COORDINATES
+    -1060 -320 50
+    -1040 -20 25
+   /
+END
+        
+
+REGION drift_left25
+  COORDINATES
+    -1020 20 50
+    -1000 320 25
+   /
+END
+    
+REGION drift_right25
+  COORDINATES
+    -1020 -320 50
+    -1000 -20 25
+   /
+END

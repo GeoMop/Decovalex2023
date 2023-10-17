@@ -1,0 +1,440 @@
+
+================================
+  PFLOTRAN Development Version
+================================
+
+"grid_structured_type" set to default value.
+pflotran card:: GRID
+
+ *DXYZ 
+  dx  
+  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01
+  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01
+  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01
+  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01
+  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01
+  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01
+  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01
+  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01
+  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01
+  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01
+  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01
+  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01
+  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01
+  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01
+  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01
+  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01
+  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01
+  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01
+  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01
+  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01
+  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01
+  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01
+  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01
+  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01
+  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01  2.0000E+01
+  dy  
+  3.0000E+01  3.0000E+01  3.0000E+01  3.0000E+01  3.0000E+01  3.0000E+01  3.0000E+01  3.0000E+01  3.0000E+01  3.0000E+01
+  3.0000E+01  3.0000E+01  3.0000E+01  3.0000E+01  3.0000E+01  3.0000E+01  3.0000E+01  3.0000E+01  3.0000E+01  3.0000E+01
+  3.0000E+01  3.0000E+01  3.0000E+01  3.0000E+01  3.0000E+01  3.0000E+01  3.0000E+01  3.0000E+01  3.0000E+01  3.0000E+01
+  3.0000E+01  3.0000E+01  3.0000E+01  3.0000E+01  3.0000E+01  3.0000E+01  3.0000E+01  3.0000E+01  3.0000E+01  3.0000E+01
+  3.0000E+01  3.0000E+01  3.0000E+01  3.0000E+01  3.0000E+01  3.0000E+01  3.0000E+01  3.0000E+01  3.0000E+01  3.0000E+01
+  3.0000E+01  3.0000E+01  3.0000E+01  3.0000E+01  3.0000E+01  3.0000E+01  3.0000E+01  3.0000E+01  3.0000E+01  3.0000E+01
+  3.0000E+01  3.0000E+01  3.0000E+01  3.0000E+01  3.0000E+01  3.0000E+01
+  dz  
+  2.5000E+01  2.5000E+01  2.5000E+01  2.5000E+01  2.5000E+01  2.5000E+01  2.5000E+01  2.5000E+01  2.5000E+01  2.5000E+01
+  2.5000E+01  2.5000E+01  2.5000E+01  2.5000E+01  2.5000E+01  2.5000E+01  2.5000E+01  2.5000E+01  2.5000E+01  2.5000E+01
+  2.5000E+01  2.5000E+01  2.5000E+01  2.5000E+01  2.5000E+01  2.5000E+01  2.5000E+01  2.5000E+01  2.5000E+01  2.5000E+01
+  2.5000E+01  2.5000E+01  2.5000E+01  2.5000E+01  2.5000E+01  2.5000E+01  2.5000E+01  2.5000E+01  2.5000E+01  2.5000E+01
+pflotran card:: FLUID_PROPERTY
+"FLUID_PROPERTY,diffusion_coefficient units" set to default value.
+pflotran card:: DATASET
+pflotran card:: DATASET
+pflotran card:: DATASET
+pflotran card:: DATASET
+pflotran card:: MATERIAL_PROPERTY
+  Name :: soil
+"MATERIAL_PROPERTY,rock density units" set to default value.
+pflotran card:: CHARACTERISTIC_CURVES
+  Name :: default
+ WARNING: Mualem-van Genuchten relative permeability function is being used without SMOOTH option.
+pflotran card:: TIME
+pflotran card:: OUTPUT
+pflotran card:: INTEGRAL_FLUX
+pflotran card:: INTEGRAL_FLUX
+pflotran card:: INTEGRAL_FLUX
+pflotran card:: INTEGRAL_FLUX
+pflotran card:: INTEGRAL_FLUX
+pflotran card:: INTEGRAL_FLUX
+pflotran card:: REGION
+obs_slope
+pflotran card:: REGION
+obs_lowest
+pflotran card:: REGION
+HCD_slope
+pflotran card:: REGION
+HCD_lowpoint
+pflotran card:: OBSERVATION
+pflotran card:: OBSERVATION
+pflotran card:: OBSERVATION
+pflotran card:: OBSERVATION
+pflotran card:: REGION
+all
+pflotran card:: REGION
+repository
+pflotran card:: REGION
+inflow
+pflotran card:: REGION
+outflow
+pflotran card:: REGION
+top
+pflotran card:: REGION
+drift_left1
+pflotran card:: REGION
+drift_right1
+pflotran card:: REGION
+drift_left2
+pflotran card:: REGION
+drift_right2
+pflotran card:: REGION
+drift_left3
+pflotran card:: REGION
+drift_right3
+pflotran card:: REGION
+drift_left4
+pflotran card:: REGION
+drift_right4
+pflotran card:: REGION
+drift_left5
+pflotran card:: REGION
+drift_right5
+pflotran card:: REGION
+drift_left6
+pflotran card:: REGION
+drift_right6
+pflotran card:: REGION
+drift_left7
+pflotran card:: REGION
+drift_right7
+pflotran card:: REGION
+drift_left8
+pflotran card:: REGION
+drift_right8
+pflotran card:: REGION
+drift_left9
+pflotran card:: REGION
+drift_right9
+pflotran card:: REGION
+drift_left10
+pflotran card:: REGION
+drift_right10
+pflotran card:: REGION
+drift_left11
+pflotran card:: REGION
+drift_right11
+pflotran card:: REGION
+drift_left12
+pflotran card:: REGION
+drift_right12
+pflotran card:: REGION
+drift_left13
+pflotran card:: REGION
+drift_right13
+pflotran card:: REGION
+drift_left14
+pflotran card:: REGION
+drift_right14
+pflotran card:: REGION
+drift_left15
+pflotran card:: REGION
+drift_right15
+pflotran card:: REGION
+drift_left16
+pflotran card:: REGION
+drift_right16
+pflotran card:: REGION
+drift_left17
+pflotran card:: REGION
+drift_right17
+pflotran card:: REGION
+drift_left18
+pflotran card:: REGION
+drift_right18
+pflotran card:: REGION
+drift_left19
+pflotran card:: REGION
+drift_right19
+pflotran card:: REGION
+drift_left20
+pflotran card:: REGION
+drift_right20
+pflotran card:: REGION
+drift_left21
+pflotran card:: REGION
+drift_right21
+pflotran card:: REGION
+drift_left22
+pflotran card:: REGION
+drift_right22
+pflotran card:: REGION
+drift_left23
+pflotran card:: REGION
+drift_right23
+pflotran card:: REGION
+drift_left24
+pflotran card:: REGION
+drift_right24
+pflotran card:: REGION
+drift_left25
+pflotran card:: REGION
+drift_right25
+pflotran card:: FLOW_CONDITION
+initial
+pflotran card:: INITIAL_CONDITION
+"Initial Condition name" set to default value.
+pflotran card:: BOUNDARY_CONDITION
+pflotran card:: STRATA
+pflotran card:: END_SUBSURFACE
+Domain Bounds (x y z):
+   -2.5000000000E+03 -1.0000000000E+03 -5.0000000000E+02
+    2.5000000000E+03  9.8000000000E+02  5.0000000000E+02
+ Extent of Gridded Domain
+  X: -2500.0000000000000 - 2500.0000000000000
+  Y: -1000.0000000000000 - 980.00000000000000
+  Z: -500.00000000000000 - 500.00000000000000
+
+Testing group: Permeability
+Group "Permeability" in HDF5 file "input_fields.h5" not found in file.  Therefore, assuming a cell-indexed dataset.
+Testing group: Porosity
+Group "Porosity" in HDF5 file "input_fields.h5" not found in file.  Therefore, assuming a cell-indexed dataset.
+Testing group: Tortuosity
+Group "Tortuosity" in HDF5 file "input_fields.h5" not found in file.  Therefore, assuming a cell-indexed dataset.
+Testing group: surface_top
+Group "surface_top" in HDF5 file "pressure_boundary.h5" found in file.
+Reading times for hdf5 dataset "surface_top", if they exist.
+Opening hdf5 file: pressure_boundary.h5
+Opening hdf5 group: surface_top
+No times to read.
+Closing hdf5 group: surface_top
+Closing hdf5 file: pressure_boundary.h5
+Reading Gridded Dataset: surface_top
+Opening hdf5 file: pressure_boundary.h5
+Opening hdf5 group: surface_top
+Closing hdf5 group: surface_top
+Closing hdf5 file: pressure_boundary.h5
+16500 connections found for integral flux "surface".
+5610 connections found for integral flux "left".
+6600 connections found for integral flux "slope".
+4290 connections found for integral flux "right".
+1 connections found for integral flux "max_slope".
+1 connections found for integral flux "max_lowest".
+Opening hdf5 file: input_fields.h5
+Setting up grid cell indices
+Reading dataset: Cell Ids
+  0.01 Seconds to set up indices
+Reading dataset: Permeability
+  0.07 Seconds to read real array
+Closing hdf5 file: input_fields.h5
+Opening hdf5 file: input_fields.h5
+Setting up grid cell indices
+Reading dataset: Cell Ids
+  0.01 Seconds to set up indices
+Reading dataset: Porosity
+  0.01 Seconds to read real array
+Closing hdf5 file: input_fields.h5
+Opening hdf5 file: input_fields.h5
+Setting up grid cell indices
+Reading dataset: Cell Ids
+  0.01 Seconds to set up indices
+Reading dataset: Tortuosity
+  0.01 Seconds to read real array
+Closing hdf5 file: input_fields.h5
+
+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
+
+  Initial Condition
+
+--------------------------------------------------------------------------------
+          Flow Condition:   initial
+                  Region:   all
+--------------------------------------------------------------------------------
+
+  Flow Condition: initial
+    Synchronize time with update: no
+    Time units: yr
+    Length units: m
+      Datum:
+        Dataset: surface
+          Type: dataset_gridded_hdf5_type
+          Filename: pressure_boundary.h5
+          Transient: no
+          HDF5 Dataset Name: surface_top
+          Realization Dependent: no
+          Cell Indexed: no
+          Maximum Buffer Size:  10
+          Grid Dimension: XY
+          Is cell-centered?: no
+          Origin:  -2.5000E+03 -1.0000E+03
+          Discretization:   1.0000E+00  1.0000E+00
+
+    Sub Condition: pressure
+      Type: hydrostatic
+      Gradient:
+      Data:
+        Dataset: Unnamed Ascii Dataset
+          Type: dataset_ascii_type
+          Transient: no
+          Array Rank:  1
+
+--------------------------------------------------------------------------------
+
+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
+
+  Boundary Condition
+
+--------------------------------------------------------------------------------
+          Flow Condition:   initial
+                  Region:   top
+--------------------------------------------------------------------------------
+
+  Flow Condition: initial
+    Synchronize time with update: no
+    Time units: yr
+    Length units: m
+      Datum:
+        Dataset: surface
+          Type: dataset_gridded_hdf5_type
+          Filename: pressure_boundary.h5
+          Transient: no
+          HDF5 Dataset Name: surface_top
+          Realization Dependent: no
+          Cell Indexed: no
+          Maximum Buffer Size:  10
+          Grid Dimension: XY
+          Is cell-centered?: no
+          Origin:  -2.5000E+03 -1.0000E+03
+          Discretization:   1.0000E+00  1.0000E+00
+
+    Sub Condition: pressure
+      Type: hydrostatic
+      Gradient:
+      Data:
+        Dataset: Unnamed Ascii Dataset
+          Type: dataset_ascii_type
+          Transient: no
+          Array Rank:  1
+
+--------------------------------------------------------------------------------
+Default HDF5 method is used in Initialization
+
+ Requested processors and decomposition =     1, npx,y,z=   -1  -1  -1
+ Actual decomposition: npx,y,z=    1   1   1
+
+  Beginning setup of FLOW SNES
+ number of dofs =   1, number of phases =   1
+ mode = Richards: p
+  Finished setting up FLOW SNES
+
+FLOW Time Stepper SNES (Steady)
+      maximum number of steps: 999999
+constant time steps threshold: 5
+       maximum number of cuts: 16
+             reduction factor: 5.000000E-01
+        maximum growth factor: 2.000000E+00
+                 acceleration: on
+       acceleration threshold: 5
+       number of ramp entries: 5
+                ramp entry #1: 2.0000
+                ramp entry #2: 2.0000
+                ramp entry #3: 2.0000
+                ramp entry #4: 2.0000
+                ramp entry #5: 2.0000
+                ramp entry #6: 1.8000
+                ramp entry #7: 1.6000
+                ramp entry #8: 1.4000
+                ramp entry #9: 1.2000
+               ramp entry #10: 1.0000
+               ramp entry #11: 1.0000
+               ramp entry #12: 1.0000
+               ramp entry #13: 1.0000
+
+FLOW Newton Solver
+                         atol: 1.000000E-50
+                         rtol: 1.000000E-08
+                         stol: 1.000000E-08
+                         dtol: 1.000000E+04
+                      maxnorm: 1.000000E+20
+                    inftolres: -9.990000E+02
+                    inftolupd: -9.990000E+02
+                 inftolrelupd: -9.990000E+02
+                 inftolsclres: -9.990000E+02
+                     max iter: 50
+                     min iter: 1
+                         maxf: 10000
+                  matrix type: baij
+         precond. matrix type: baij
+               inexact newton: off
+            print convergence: on
+   print detailed convergence: off
+          check infinity norm: on
+
+FLOW Linear Solver
+                       solver: bcgs
+               preconditioner: ilu
+                         atol: 1.000000E-50
+                         rtol: 1.000000E-05
+                         dtol: 1.000000E+04
+            maximum iteration: 10000
+
+FLOW Newton Solver
+                         atol: 1.000000E-50
+                         rtol: 1.000000E-08
+                         stol: 1.000000E-08
+                         dtol: 1.000000E+04
+                      maxnorm: 1.000000E+20
+                    inftolres: -9.990000E+02
+                    inftolupd: -9.990000E+02
+                 inftolrelupd: -9.990000E+02
+                 inftolsclres: -9.990000E+02
+                     max iter: 50
+                     min iter: 1
+                         maxf: 10000
+                  matrix type: baij
+         precond. matrix type: baij
+               inexact newton: off
+            print convergence: on
+   print detailed convergence: off
+          check infinity norm: on
+
+FLOW Linear Solver
+                       solver: bcgs
+               preconditioner: ilu
+                         atol: 1.000000E-50
+                         rtol: 1.000000E-05
+                         dtol: 1.000000E+04
+            maximum iteration: 10000
+
+
+ Finished Initialization
+
+
+== RICHARDS FLOW ===============================================================
+  0 2r: 3.23E-03 2x: 0.00E+00 2u: 0.00E+00 ir: 1.44E-04 iu: 0.00E+00 rsn:   0
+  1 2r: 3.01E-08 2x: 4.75E+09 2u: 1.19E+07 ir: 1.81E-09 iu: 1.13E+05 rsn:   0
+  2 2r: 2.43E-13 2x: 4.75E+09 2u: 1.32E+03 ir: 1.12E-13 iu: 9.37E+00 rsn: rtol
+
+ Step      1 Time=  1.00000E+01 Dt=  2.73973E-03 [y] conv_reason: 3
+  newton =   2 [       2] linear =   206 [       206]
+  --> SNES Linear/Non-Linear Iterations = 206 / 2
+  --> SNES Residual: 0.242922E-12 0.368063E-18 0.112082E-12
+  --> max change: dpmx=   1.1315E+05
+
+ --> Dump checkpoint file: stoch_fractures_WP_flow-restart.h5
+      Seconds to write to checkpoint file:       0.16
+
+PMCSubsurfaceFlow
+ Total Time: 1.5870E+01 seconds
+ FLOW TS Steady steps = 1 newton = 2 linear = 206
+ FLOW TS Steady time = 15.5 seconds
+
+ Wall Clock Time:  1.6473E+01 [sec]   2.7455E-01 [min]   4.5758E-03 [hr]

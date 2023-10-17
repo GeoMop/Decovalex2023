@@ -9,7 +9,12 @@ rock:
     porosity: 0.0018
     tortuosity_factor: 1.99e-5
     
-dfn_origin: [-2500,-1000,-500] 
+dfn_origin: [-2500,-1000,-500]
+
+# Select subset of the fracture set sorted by decreasing size.
+# Mainly for debugging purposes.
+#fr_set_slice: [9000, null, 1]
+
 
 # Repository according to Decovalex setting    
 repository:
@@ -64,3 +69,19 @@ repository:
 #      drift_step: [40, 0, 0]
 #      n_drifts: 1
 #      hole_spacing: 6
+
+
+source_fields:
+    InitInstant:
+        bg_cells: 1e-20
+        src_cells: 1.41e-6
+    InitFractional:
+        bg_cells: 1e-20
+        src_cells: 1.27e-5
+    DecayRate:
+        bg_cells: 0.0
+        src_cells: 1.2e-16
+    DiffusionRate:
+        bg_cells: 0.0
+        src_cells: 1.19e-7
+
